@@ -43,13 +43,14 @@ private:
     const uint16_t _main_cache_capacity;
     /// current number of entries in the cache
     uint16_t _main_cache_size;
-
     /// maps transaciton hash to transaction
     std::unordered_map<uint32_t, std::unique_ptr<Transaction>> _mempool_cache;
     /// maximum amount of entries in mempool
     const uint16_t _mempool_capacity;
     /// current amount of entires in mempool
     uint16_t _mempool_size;
+
+    bool validate_transactionInput(TransactionInput& trxIn);
 
 public:
     CoinDatabase();
