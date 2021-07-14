@@ -35,6 +35,8 @@ std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block, uint
 
         for ( int b = 0; b < block.transactions[a]->transaction_inputs.size(); b = b + 1 ) {
             const std::unique_ptr<TransactionInput>& trx_in = block.transactions[a]->transaction_inputs[b];
+            std:: tuple<uint32_t, uint32_t> utxo = CoinDatabase::return_matching_utxo(&trx_in);
+
             utxo.insert(utxo.end(),1,b); //place at end or beginning?
             amounts.insert(amounts.end(),1, trx_in-> ;//ToDO: ??);
             public_keys.insert(public_keys.end(), 1, trx_in->signature);

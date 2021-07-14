@@ -16,6 +16,7 @@
 #include <file_info.h>
 #include <undo_block.h>
 #include "../primitives/block.h"
+#include <coin_database.h>
 //added
 #include <iostream>
 #include <cstring>

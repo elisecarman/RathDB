@@ -91,35 +91,26 @@ bool CoinDatabase :: validate_transactionInput (TransactionInput& trxIn) { //wha
 }
 
 
-//std:: tuple<uint32_t, uint32_t> CoinDatabase :: return_matching_utxo(std::unique_ptr<TransactionInput> trxIn){
-//    const std::string locator = CoinLocator::serialize(
-//            CoinLocator(trxIn->reference_transaction_hash, trxIn->utxo_index));
-//    if (_main_cache.contains(locator)){
-//        auto utxo = std::make_tuple(_main_cache[locator]->transaction_output->amount,
-//                               _main_cache[locator]->transaction_output->public_key);
-//        return utxo;
-//    }
-//    else {
-//        std::string record = _database->get_safely(std::to_string(trxIn->reference_transaction_hash));
-//        std::unique_ptr<CoinRecord> coinRecord = CoinRecord::deserialize(record);
-//        if (std::find(coinRecord->utxo.begin(), coinRecord->utxo.end(),
-//                      trxIn->utxo_index) != coinRecord->utxo.end()){
-//
-//            auto it = std::find(coinRecord->utxo.begin(), coinRecord->utxo.end(), trxIn->utxo_index);
-//            if (it == coinRecord->utxo.end()) {
-//                return std::make_tuple(0, 0);
-//            }
-//
-//            uint32_t index = coinRecord->utxo.begin() + it;
-//
-//            auto utxo = std::make_tuple(coinRecord->amounts[coinRecord->utxo.begin() + it],
-//                                        coinRecord->public_keys[coinRecord->utxo.begin() + it];
-//            return utxo;
-//        } else {
-//            return false;
-//        }
-//    }
-//}
+std:: tuple<uint32_t, uint32_t> CoinDatabase :: return_matching_utxo(std::unique_ptr<TransactionInput> trxIn){
+    const std::string locator = CoinLocator::serialize(
+            CoinLocator(trxIn->reference_transaction_hash, trxIn->utxo_index));
+    if (_main_cache.contains(locator)){
+        auto utxo = std::make_tuple(_main_cache[locator]->transaction_output->amount,
+                               _main_cache[locator]->transaction_output->public_key);
+        return utxo;
+    }
+    else {
+        std::string record = _database->get_safely(std::to_string(trxIn->reference_transaction_hash));
+        std::unique_ptr<CoinRecord> coinRecord = CoinRecord::deserialize(record);
+
+            for( int a = 0; a < coinRecord->utxo.size(); a = a + 1 ) {
+                if (coinRecord->utxo[a] == trxIn->utxo_index) {
+                    return std::make_tuple(coinRecord->amounts[a], coinRecord->public_keys[a]);
+                }
+            }
+        return std::make_tuple(0,0);
+    }
+}
 
 
 
