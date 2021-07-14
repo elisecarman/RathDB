@@ -64,5 +64,7 @@ std::unique_ptr<UndoBlock> UndoBlock::deserialize(const std::string& serialized_
     }
     std::unique_ptr<UndoBlock> undo_block = std::make_unique<UndoBlock>(std::move(transaction_hashes), std::move(undo_coin_records));
     return std::move(undo_block);
+
+
 }
 

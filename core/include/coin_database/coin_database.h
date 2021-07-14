@@ -58,18 +58,36 @@ public:
     bool validate_block(const std::vector<std::unique_ptr<Transaction>>& transactions);
     bool validate_transaction(const Transaction& transaction);
     void store_block(std::vector<std::unique_ptr<Transaction>> transactions);
-    void store_transaction(std::unique_ptr<Transaction> transaction);
+    bool store_transaction(std::unique_ptr<Transaction> transaction);
     bool validate_and_store_block(std::vector<std::unique_ptr<Transaction>> transactions);
     bool validate_and_store_transaction(std::unique_ptr<Transaction> transaction);
 
     void remove_transactions_from_mempool(const std::vector<std::unique_ptr<Transaction>>& transactions);
     void store_transactions_to_main_cache(std::vector<std::unique_ptr<Transaction>> transactions);
-    void store_transaction_in_mempool(std::unique_ptr<Transaction> transaction);
 
-    void undo_coins(std::vector<std::unique_ptr<UndoBlock>> undo_blocks);
+    void store_to_cache_help(std::unique_ptr<Transaction> transaction);
+    void mark_as_spent(std::unique_ptr<Transaction> transaction);
+
+    static CoinRecord transaction_to_coin_record(std:: unique_ptr<Transaction> trx);
+    void store_transaction_in_mempool(std::unique_ptr<Transaction> transaction);
+    void remove_coin_from_database(std::unique_ptr<CoinLocator> locator);
+
+
+    void undo_coins(std::vector<std::unique_ptr<UndoBlock>> undo_blocks, std::vector<std::unique_ptr<Block>> blocks);
+
     std::vector<std::pair<uint32_t, uint8_t>> get_all_utxo(uint32_t public_key);
+
     void flush_main_cache();
 
+    //a helper for flush_main_cache
+    void add_utxo(const std::unique_ptr<UndoCoinRecord>& undo_coin_record, uint32_t transaction_hash);
+    void remove_utxo(std::unique_ptr<Transaction> transaction);
+    uint32_t find_index(uint32_t index, uint32_t utxo, const std::unique_ptr<CoinRecord>& record);
+
+    std::tuple<uint32_t, uint32_t> return_matching_utxo(std::unique_ptr<TransactionInput>);
 };
+
+
+
 
 #endif //RATHDB_STENCIL_COIN_DATABASE_H

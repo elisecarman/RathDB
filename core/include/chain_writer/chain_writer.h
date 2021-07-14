@@ -16,6 +16,9 @@
 #include <file_info.h>
 #include <undo_block.h>
 #include "../primitives/block.h"
+//added
+#include <iostream>
+#include <cstring>
 
 /// File I/O for block data and "undo" block data.
 class ChainWriter {
@@ -60,13 +63,15 @@ public:
     /// stores a block's info and its undo block info
     std::unique_ptr<BlockRecord> store_block(const Block& block, uint32_t height);
     /// writes a serialized block to disk.
-    std::unique_ptr<FileInfo> write_block(std::string serialized_block);
+    std::vector<std::unique_ptr<FileInfo>> ChainWriter::write_block( std::vector<std::string> blocks);
     /// writes a serialized undo block to disk.
-    std::unique_ptr<FileInfo> write_undo_block(std::string serialized_block);
+    std::unique_ptr<FileInfo> write_undo_block(std::string serialized_block;
     /// reads a serialized block from disk.
     std::string read_block(const FileInfo& block_location);
     /// reads a serialized undo block from disk.
     std::string read_undo_block(const FileInfo& undo_block_location);
+
+    std::string get_filename();
 
     // Copy constructor and copy assignment operator deleted.
     ChainWriter(ChainWriter&& other) = delete;

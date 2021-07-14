@@ -17,7 +17,7 @@
 class BlockInfoDatabase {
 private:
     /// (hashmap storage) of block hash to block record.
-    std::unique_ptr<Database> _database;
+    std::unique_ptr<Database> _database; //hash of block to block record
 public:
     /// Constructor.
     BlockInfoDatabase();

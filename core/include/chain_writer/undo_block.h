@@ -37,6 +37,7 @@ public:
     /// Deserializes an UndoBlock. Necessary to read UndoBlocks
     /// from an "undo" file
     static std::unique_ptr<UndoBlock> deserialize(const std::string& serialized_undo_block);
+
 };
 
 #endif //RATHDB_UNDO_BLOCK_H

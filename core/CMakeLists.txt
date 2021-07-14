@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB_RECURSE DB_SOURCES src/db/*.cpp)
 file(GLOB_RECURSE DB_INCLUDE include/db/*.h)
 
+
 add_library(db STATIC ${DB_SOURCES} ${DB_INCLUDE})
 
 target_include_directories(db PUBLIC include/db)
@@ -18,6 +19,21 @@ target_include_directories(db PUBLIC include/db)
 # -----------------------------------------------
 # -----------------------------------------------
 # Setting up libproto
+
+include(C:/Users/Elise/vcpkg/scripts/buildsystems/vcpkg.cmake)  #comment out before turning in
+#
+#
+
+
+#SET(PROTOBUF_INCLUDE_DIR "C:/Users/Elise/vcpkg/packages/protobuf_x64-windows/include/")
+#SET(Protobuf_SRC_ROOT_FOLDER "C:/Users/Elise/vcpkg/packages/protobuf_x64-windows/")
+#SET(Protobuf_LIBRARIES "C:/Users/Elise/vcpkg/packages/protobuf_x64-windows/")
+#
+
+
+# SET(PROTOBUF_INCLUDE_DIR "C:/Users/Elise/vcpkg/installed/x64-windows/include/google/protobuf")
+# SET(Protobuf_SRC_ROOT_FOLDER "C:/Users/Elise/vcpkg/installed/x64-windows/")
+# SET(Protobuf_LIBRARIES "C:/Users/Elise/vcpkg/installed/x64-windows/lib")
 
 include(FindProtobuf)
 find_package(Protobuf REQUIRED)
