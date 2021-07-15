@@ -15,12 +15,12 @@
 #include <chain_writer.h>
 #include <coin_database.h>
 
-/// Manges blockchain data on disk/RAM. Supports querying.
+ /// Manges blockchain data on disk/RAM. Supports querying.
 class Chain {
 private:
     // The first section of private members keep track of
     // information regarding the active chain.
-
+    uint32_t _branching_height;
     /// The length (in blocks) of the active chain.
     uint32_t _active_chain_length;
     /// The last block of the active chain.
@@ -40,17 +40,17 @@ private:
     /// Interface for storing/querying transactions.
     std::unique_ptr<CoinDatabase> _coin_database;
 
-    std::vector<uint32_t> last_five_hashes;
+    std::vector<uint32_t> _last_five_hashes;
     /// Makes the genesis block.
     static std::unique_ptr<Block> construct_genesis_block();
 
     /// gets forked blocks on a chain in a stack-like order
-    std::vector<std::shared_ptr<Block>> get_forked_blocks_stack(uint32_t starting_hash);
+    std::vector<std::shared_ptr<Block>>  get_forked_blocks_stack(uint32_t starting_hash);
 
     /// gets all undo blocks on main chain to a specific height
     std::vector<std::unique_ptr<UndoBlock>> get_undo_blocks_queue(uint32_t branching_height);
 
-    
+
 public:
     // The first section of public functions constructs a Chain.
 
@@ -76,6 +76,9 @@ public:
     /// Gets the block object with the inputted block hash.
     std::unique_ptr<Block> get_block(uint32_t block_hash);
 
+    std::unique_ptr<UndoBlock> get_undo_block(uint32_t block_hash);
+
+    std::unique_ptr<UndoBlock> make_undo_block(std::unique_ptr<Block> block);
     /// Gets some blocks on the active chain in order.
     std::vector<std::unique_ptr<Block>> get_active_chain(uint32_t start, uint32_t end);
 
@@ -100,12 +103,10 @@ public:
     /// Gets all utxo for a particular public key.
     std::vector<std::pair<uint32_t, uint8_t>> get_all_utxo(uint32_t public_key);
 
-    std::unique_ptr<UndoBlock> make_undo_block(std::unique_ptr<Block> block);
-
     // Copy constructor and copy assignment operator deleted.
-    Chain(Chain &&other) = delete;
+    Chain(Chain&& other) = delete;
 
-    Chain &operator=(const Chain &other) = delete;
+    Chain& operator=(const Chain& other) = delete;
 };
 
 #endif //RATHDB_STENCIL_CHAIN_H
