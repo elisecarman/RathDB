@@ -33,19 +33,16 @@ std::unique_ptr<Block> Chain::construct_genesis_block() {
     return genesis;
 }
 
-std::unique_ptr<UndoBlock> Chain::make_undo_block(std::unique_ptr<Block> block) {
-
-}
 
 Chain::Chain() : _active_chain_length(1), _active_chain_last_block(construct_genesis_block()),
 _block_info_database(std::make_unique<BlockInfoDatabase>()), _chain_writer(std::make_unique<ChainWriter>()), _coin_database(std::make_unique<CoinDatabase>())
 {
 
     //can't use move i don't think? might need to change undo block function parameters
-     //std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(_active_chain_last_block));
+    std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(_active_chain_last_block));
 
     _chain_writer->write_block(Block::serialize(*_active_chain_last_block));
-    //_chain_writer->write_undo_block(UndoBlock::serialize(*undo_block));
+    _chain_writer->write_undo_block(UndoBlock::serialize(*undo_block));
 
     std::unique_ptr<BlockRecord> block_record = _chain_writer->store_block(*_active_chain_last_block, 1);
 
@@ -56,6 +53,40 @@ _block_info_database(std::make_unique<BlockInfoDatabase>()), _chain_writer(std::
     _last_five_hashes.push_back(RathCrypto::hash(Block::serialize(*_active_chain_last_block)));
 
 }
+
+std::unique_ptr<UndoBlock> Chain::make_undo_block(std::unique_ptr<Block> block) {
+    std::vector<std::unique_ptr<UndoCoinRecord>> undo_coin_records;
+    std::vector<uint32_t> trans_hashes;
+    
+    for (int i = 0; i < block->transactions.size(); i++) {
+        std::vector<uint32_t> utxo;
+        std::vector<uint32_t> public_keys;
+        std::vector<uint32_t> amounts;
+        //copy output values
+        for (int k = 0; k < block.transactions[i]->transaction_inputs.size(); k++) {
+            uint32_t index = block->transactions[i]->transaction_inputs[k]->utxo_index;
+            utxo.push_back(index);
+            uint32_t tr_hash = block->transactions[i]->transaction_inputs[k]->reference_transaction_hash;
+            
+            std::tuple<uint32_t, uint32_t> tuple = _coin_database->return_matching_utxo(block->transactions[i]->transaction_inputs[k]);
+            amounts.push_back(std::move(std::get<0>(tuple)));
+            public_keys.push_back(std::move(std::get<1>(tuple)));
+
+        }
+
+        std::unique_ptr<UndoCoinRecord> cr = std::make_unique<UndoCoinRecord>(block->transactions[i]->version, std::move(utxo), std::move(amounts), std::move(public_keys));
+        undo_coin_records.push_back(std::move(cr));
+        uint32_t hash = RathCrypto::hash(Transaction::serialize(*block->transactions[i]));
+        trans_hashes.push_back(std::move(hash));
+    }
+    std::unique_ptr<UndoBlock> undo = std::make_unique<UndoBlock>(std::move(trans_hashes), std::move(undo_coin_records));
+
+    return undo;
+    
+}
+
+
+
 void Chain::handle_block(std::unique_ptr<Block> block) {
     bool valid;
     if (block->block_header->previous_block_hash == get_last_block_hash()) {
@@ -83,7 +114,7 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
         uint32_t prev_hash = block->block_header->previous_block_hash;
         std::unique_ptr<BlockRecord> prev_record = _block_info_database->get_block_record(prev_hash);
 
-
+        
         std::unique_ptr<BlockRecord> rec = _chain_writer->store_block(*block, prev_record->height + 1);
         _chain_writer->write_block(Block::serialize(*block));
         std::unique_ptr<UndoBlock> undo = make_undo_block(std::move(block));
@@ -102,6 +133,7 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
             for (int i = 0; i < undo_queue.size(); i++) {
                 std::shared_ptr<Block> fork = forked_stack[i];
                 _coin_database->store_block(fork->get_transactions());
+                
             }
         }
     }

@@ -42,7 +42,7 @@ std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block, uint
 
         }
             block.transactions[a]->transaction_inputs[b]
-    }
+    } 
     std::unique_ptr<UndoBlock> undo_block = std::make_unique<UndoBlock>(
             //transaction outputs --> convert
             //          input (reference transaction hash, utxo index, signature)
@@ -50,7 +50,7 @@ std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block, uint
 
 
             //undo_coin_records: //utxo, amount, public keys
-            )
+        )
     //make vector <block, undo block>
     //call write block, get File Info
     //create and return block Record

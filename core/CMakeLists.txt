@@ -36,6 +36,7 @@ include(C:/Users/Elise/vcpkg/scripts/buildsystems/vcpkg.cmake)  #comment out bef
 # SET(Protobuf_LIBRARIES "C:/Users/Elise/vcpkg/installed/x64-windows/lib")
 
 include(FindProtobuf)
+include(C:/vcpkg/scripts/buildsystems/vcpkg.cmake)
 find_package(Protobuf REQUIRED)
 include_directories(${Protobuf_INCLUDE_DIR})
 
