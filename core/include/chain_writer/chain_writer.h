@@ -64,7 +64,7 @@ public:
     /// stores a block's info and its undo block info
     std::unique_ptr<BlockRecord> store_block(const Block& block, const UndoBlock& undo_block, uint32_t height);
     /// writes a serialized block to disk.
-    std::vector<std::unique_ptr<FileInfo>> write_block( std::vector<std::string> blocks);
+    std::unique_ptr<FileInfo> write_block( std::string serialized_undo_block);
     /// writes a serialized undo block to disk.
     std::unique_ptr<FileInfo> write_undo_block(std::string serialized_block);
     /// reads a serialized block from disk.
@@ -72,7 +72,7 @@ public:
     /// reads a serialized undo block from disk.
     std::string read_undo_block(const FileInfo& undo_block_location);
 
-    std::string get_filename();
+    std::string get_filename(bool is_undo);
 
     // Copy constructor and copy assignment operator deleted.
     ChainWriter(ChainWriter&& other) = delete;

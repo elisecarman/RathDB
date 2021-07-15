@@ -35,8 +35,6 @@ std::string CoinLocator::serialize_from_construct(uint32_t transaction_hash, uin
            std::to_string(output_index);
 }
 
-//CoinDatabase::CoinDatabase() : _database(std::make_unique<Database>()), _main_cache_capacity(10000), _main_cache_size(0), … {}
-
 
 CoinDatabase :: CoinDatabase():
 

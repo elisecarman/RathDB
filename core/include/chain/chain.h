@@ -1,11 +1,11 @@
 /*
- * This file belongs to Brown University's computer
- * science department as part of csci1951L - Blockchains
- * and cryptocurrencies.
- *
- * This software was developed by Colby Anderson (HTA)
- * and Parker Ljung (TA) of csci1951L in Summer of 2021.
- */
+* This file belongs to Brown University's computer
+* science department as part of csci1951L - Blockchains
+        * and cryptocurrencies.
+*
+* This software was developed by Colby Anderson (HTA)
+* and Parker Ljung (TA) of csci1951L in Summer of 2021.
+*/
 
 #ifndef RATHDB_STENCIL_CHAIN_H
 #define RATHDB_STENCIL_CHAIN_H
@@ -40,14 +40,16 @@ private:
     /// Interface for storing/querying transactions.
     std::unique_ptr<CoinDatabase> _coin_database;
 
+    std::vector<uint32_t> _last_five_hashes;
     /// Makes the genesis block.
     static std::unique_ptr<Block> construct_genesis_block();
 
     /// gets forked blocks on a chain in a stack-like order
-    std::vector<std::shared_ptr<Block>> get_forked_blocks_stack(uint32_t starting_hash);
+    std::vector<std::shared_ptr<Block>>  get_forked_blocks_stack(uint32_t starting_hash);
 
     /// gets all undo blocks on main chain to a specific height
     std::vector<std::unique_ptr<UndoBlock>> get_undo_blocks_queue(uint32_t branching_height);
+
 
 public:
     // The first section of public functions constructs a Chain.
@@ -74,6 +76,9 @@ public:
     /// Gets the block object with the inputted block hash.
     std::unique_ptr<Block> get_block(uint32_t block_hash);
 
+    std::unique_ptr<UndoBlock> get_undo_block(uint32_t block_hash);
+
+    std::unique_ptr<UndoBlock> make_undo_block(std::unique_ptr<Block> block);
     /// Gets some blocks on the active chain in order.
     std::vector<std::unique_ptr<Block>> get_active_chain(uint32_t start, uint32_t end);
 
@@ -104,7 +109,7 @@ public:
     Chain &operator=(const Chain &other) = delete;
 
 
-    std::unique_ptr<UndoBlock> make_undo_block(std::unique_ptr<Block> block);
+    std::vector<std::unique_ptr<Block>> reverse_vector(std::vector<std::unique_ptr<Block>> vector);
 };
 
 #endif //RATHDB_STENCIL_CHAIN_H

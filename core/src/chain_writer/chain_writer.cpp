@@ -22,10 +22,9 @@ std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block,
                                                         const UndoBlock& undo_block,
                                                         uint32_t height){
 
-    std::vector<std::string> blocks;
-    blocks.push_back(Block::serialize(block));
-    blocks.push_back(UndoBlock::serialize(undo_block));
-    std::vector<std::unique_ptr<FileInfo>> info_list = ChainWriter::write_block(blocks);
+
+    std::unique_ptr<FileInfo> block_info = ChainWriter::write_block(Block::serialize(block));
+    std::unique_ptr<FileInfo> undo_info = ChainWriter::write_block(UndoBlock::serialize(undo_block));
 
     uint32_t trx_size = block.transactions.size();
 
@@ -44,14 +43,12 @@ std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block,
 
 
 
-std::vector<std::unique_ptr<FileInfo>> ChainWriter::write_block( std::vector<std::string> blocks) {
+std::unique_ptr<FileInfo> ChainWriter::write_block( std::string block) {
     FILE *pFile;
-    std::vector<std::unique_ptr<FileInfo>> files;
 
-    for( int a = 0; a < blocks.size(); a = a + 1 ) {
-        int n = blocks[a].length();
+        int n = block.length();
         char char_block[n + 1];
-        strcpy(char_block, blocks[a].c_str());
+        strcpy(char_block, block.c_str());
 
 
         //ToDo: can we assume block and undo block have same max block size
@@ -73,14 +70,52 @@ std::vector<std::unique_ptr<FileInfo>> ChainWriter::write_block( std::vector<std
 
         _current_block_offset = new_offset;
 
-        files.insert(files.end(), std::move(info));
-
-    }
     //ToDo: check for file size, and open new file accordingly
-    return files;
+    return info;
 }
 
-std::string ChainWriter::get_filename() {
+
+std::unique_ptr<FileInfo> ChainWriter::write_undo_block( std::string block) {
+    FILE *pFile;
+
+    int n = block.length();
+    char char_block[n + 1];
+    strcpy(char_block, block.c_str());
+
+
+    //ToDo: can we assume block and undo block have same max block size
+    if (_current_undo_offset + n > get_max_undo_file_size()) { //check for current size of file{
+        _current_undo_offset = 0;
+        _current_undo_file_number = +1;
+    }
+    //ToDo: should we use the getters?
+
+    pFile = fopen(ChainWriter::get_filename().c_str(), "a");
+    fwrite(char_block, sizeof(char), sizeof(char_block), pFile);
+    fclose(pFile);
+
+    uint16_t new_offset = _current_block_offset + n;
+    std::unique_ptr<FileInfo> info = std::make_unique<FileInfo>(
+            get_filename(),
+            _current_block_offset,
+            new_offset);
+
+    _current_block_offset = new_offset;
+
+    //ToDo: check for file size, and open new file accordingly
+    return info;
+}
+
+
+
+std::string ChainWriter::get_filename(bool is_undo) {
+    if (is_undo) {
+        std::string filename = _data_directory + "/"
+                                + _undo_filename + "_"
+                                + std::to_string(_current_undo_file_number)
+                                + _file_extension;
+        return filename;
+    }
     std::string filename = _data_directory + "/"
                            + _block_filename + "_"
                            + std::to_string(_current_block_file_number)
