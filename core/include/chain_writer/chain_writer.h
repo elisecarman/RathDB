@@ -74,6 +74,8 @@ public:
 
     std::string get_filename(bool is_undo);
 
+    std::unique_ptr<BlockHeader> get_header(const Block& block);
+
     // Copy constructor and copy assignment operator deleted.
     ChainWriter(ChainWriter&& other) = delete;
     ChainWriter& operator=(const ChainWriter& other) = delete;

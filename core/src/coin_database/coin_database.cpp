@@ -44,33 +44,37 @@ CoinDatabase :: CoinDatabase():
  _mempool_capacity(1000),
  _mempool_size(0){}
 
-//bool CoinDatabase :: validate_block(const std::vector<std::unique_ptr<Transaction>>& transactions){
-//    //get the vector of transactions
-//    //for loop
-//    if (transactions.size() == 0){
-//        return false;
-//    }
-//
-//    bool valid = true;
-//    for( int a = 0; a < transactions.size(); a = a + 1 ) {
-//        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
-//        Transaction trx = *transactions[a];
-//        valid += validate_transaction(trx); //check if we should pass in a pointer, and how
-//    }
-//    return valid;
-//}
-
-
-bool CoinDatabase :: validate_transaction(const Transaction& transaction){
-   // std::unique_ptr<std::vector> arr = &transaction.transaction_inputs
-    //std::vector<std::unique_ptr<TransactionInput>> arr = std::move(transaction.transaction_inputs);
-    bool valid = true;
-    for( int a = 0; a < transaction.transaction_inputs.size(); a = a + 1 ) {
-        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
-        TransactionInput trxIn = *transaction.transaction_inputs[a];
-        valid += validate_transactionInput(trxIn); //check if we should pass in a pointer, and how
+bool CoinDatabase :: validate_block(const std::vector<std::unique_ptr<Transaction>>& transactions){
+    //get the vector of transactions
+    //for loop
+    if (transactions.size() == 0){
+        return false;
     }
+
+    bool valid = true;
+    for( int a = 0; a < transactions.size(); a = a + 1 ) {
+        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
+        Transaction trx = *transactions[a];
+        valid += validate_transaction(trx); //check if we should pass in a pointer, and how
+    }
+    return valid;
 }
+
+
+//bool CoinDatabase :: validate_transaction(const Transaction& transaction){
+//   // std::unique_ptr<std::vector> arr = &transaction.transaction_inputs
+//    //std::vector<std::unique_ptr<TransactionInput>> arr = std::move(transaction.transaction_inputs);
+//    bool valid = true;
+//    for( int a = 0; a < transaction.transaction_inputs.size(); a = a + 1 ) {
+//        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
+//        std::unique_ptr<TransactionInput> trxIn = std::make_unique<TransactionInput>(
+//                transaction.transaction_inputs[a]->reference_transaction_hash,
+//                transaction.transaction_inputs[a]->utxo_index,
+//                transaction.transaction_inputs[a]->signature);
+//
+//        valid += validate_transactionInput(*trxIn); //check if we should pass in a pointer, and how
+//    }
+//}
 
 bool CoinDatabase :: validate_transactionInput (TransactionInput& trxIn) { //what does adding & at the end mean
     const std::string locator = CoinLocator::serialize(

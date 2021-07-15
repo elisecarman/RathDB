@@ -28,19 +28,34 @@ std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block,
 
     uint32_t trx_size = block.transactions.size();
 
-//    std::unique_ptr<BlockRecord> record = std::make_unique<BlockRecord>(std::move(block.block_header),
-//                                                                        trx_size,
-//                                                                        height,
-//                                                                        *info_list[0],
-//                                                                        *info_list[1]);
+    std::unique_ptr<BlockHeader> h = ChainWriter::get_header(block);
 
-    //make vector <block, undo block>
-    //call write block, get File Info
-    //create and return block Record
+    std::unique_ptr<BlockRecord> record = std::make_unique<BlockRecord>(std::move(h),
+                                                                        trx_size,
+                                                                        height,
+                                                                        *block_info,
+                                                                        *undo_info);
 
-   // return record;
+//    make vector <block, undo block>
+//    call write block, get File Info
+//    create and return block Record
+
+    return record;
 }
 
+std::unique_ptr<BlockHeader> ChainWriter::get_header(const Block& block){
+
+    std::unique_ptr<BlockHeader> h = std::make_unique<BlockHeader>(
+            block.block_header->version,
+            block.block_header->previous_block_hash,
+            block.block_header->merkle_root,
+            block.block_header->difficulty_target,
+            block.block_header->nonce,
+            block.block_header->timestamp);
+
+    //std::unique_ptr<BlockHeader> h = std::move(block.block_header);
+    return h;
+}
 
 
 std::unique_ptr<FileInfo> ChainWriter::write_block( std::string block) {
@@ -58,13 +73,13 @@ std::unique_ptr<FileInfo> ChainWriter::write_block( std::string block) {
         }
         //ToDo: should we use the getters?
 
-        pFile = fopen(ChainWriter::get_filename().c_str(), "a");
+        pFile = fopen(ChainWriter::get_filename(false).c_str(), "a");
         fwrite(char_block, sizeof(char), sizeof(char_block), pFile);
         fclose(pFile);
 
         uint16_t new_offset = _current_block_offset + n;
         std::unique_ptr<FileInfo> info = std::make_unique<FileInfo>(
-                get_filename(),
+                get_filename(false),
                 _current_block_offset,
                 new_offset);
 
@@ -90,13 +105,13 @@ std::unique_ptr<FileInfo> ChainWriter::write_undo_block( std::string block) {
     }
     //ToDo: should we use the getters?
 
-    pFile = fopen(ChainWriter::get_filename().c_str(), "a");
+    pFile = fopen(ChainWriter::get_filename(true).c_str(), "a");
     fwrite(char_block, sizeof(char), sizeof(char_block), pFile);
     fclose(pFile);
 
     uint16_t new_offset = _current_block_offset + n;
     std::unique_ptr<FileInfo> info = std::make_unique<FileInfo>(
-            get_filename(),
+            get_filename(true),
             _current_block_offset,
             new_offset);
 
