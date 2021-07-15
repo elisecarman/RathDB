@@ -112,7 +112,7 @@ public:
     std::vector<std::unique_ptr<Block>> reverse_vector(std::vector<std::unique_ptr<Block>> vector);
 
     ///elise edit: added this to get common ancestor hash
-    u_int32_t get_common_ancestor(uint32_t starting_hash);
+    std::vector<std::shared_ptr<Block>> active_chain_from_ancestor(uint32_t starting_hash);
 };
 
 #endif //RATHDB_STENCIL_CHAIN_H

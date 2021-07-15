@@ -160,7 +160,9 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
 
             //need to find branching height
 
-            uint32_t branching_height = Chain::get_common_ancestor();
+
+
+            std::vector
                     ///here takes in a BlockRecord hash and returns a common ancestor Block Record hash
                     ///not sure how to get the BlockRecord to start with
 
@@ -199,7 +201,8 @@ uint32_t Chain::get_chain_length(uint32_t block_hash) {
 //--
 std::unique_ptr<Block> Chain::get_block(uint32_t block_hash) {
     std::unique_ptr<BlockRecord> block_record = _block_info_database->get_block_record(block_hash);
-    FileInfo file_info = FileInfo(block_record->block_file_stored, block_record->block_offset_start, block_record->block_offset_end);
+    FileInfo file_info = FileInfo(block_record->block_file_stored,
+                                  block_record->block_offset_start, block_record->block_offset_end);
     std::string read_block = _chain_writer->read_block(file_info);
     return Block::deserialize(read_block);
 }
@@ -360,7 +363,6 @@ std::vector<std::unique_ptr<UndoBlock>> Chain::get_undo_blocks_queue(uint32_t br
 
 std::vector<std::shared_ptr<Block>> Chain::get_forked_blocks_stack(uint32_t starting_hash) {
     std::vector<std::shared_ptr<Block>> forked_stack;
-
     std::shared_ptr<Block> block = get_block(starting_hash);
     //adds starting block to stack
     uint32_t prev_hash = block->block_header->previous_block_hash;
@@ -390,11 +392,19 @@ std::vector<std::shared_ptr<Block>> Chain::get_forked_blocks_stack(uint32_t star
     }
 }
 
-u_int32_t Chain::get_common_ancestor(uint32_t starting_hash) {
+std::vector<std::shared_ptr<Block>> Chain::active_chain_from_ancestor(uint32_t starting_hash) {
+
+    //returns a vector of active chain Blocks
+    //initiate active chain vector
+    std::vector<std::shared_ptr<Block>> active_stack;
+
+    std::shared_ptr<Block> block = get_last_block();
     std::shared_ptr<Block> fork_block = get_block(starting_hash);
-    std::shared_ptr<Block> active_block = get_block(starting_hash);
+
     uint32_t fork_prev_hash = fork_block->block_header->previous_block_hash;
-    uint32_t active_prev_hash = Chain::get_last_block_hash();
+    uint32_t active_prev_hash = block->block_header->previous_block_hash;
+
+    active_stack.push_back(std::move(block));
 
     bool is_common_anc = false;
 
@@ -402,16 +412,19 @@ u_int32_t Chain::get_common_ancestor(uint32_t starting_hash) {
         //loop through last five hashes and check if active branch (common ancestor) has been reached
         if (fork_prev_hash == active_prev_hash) {
             is_common_anc = true;
-            return fork_prev_hash;
+            return active_stack;
 
         }
+
         std::shared_ptr<Block> prev_block_undo = get_block(fork_prev_hash);
         fork_block = std::move(prev_block_undo);
         fork_prev_hash = fork_block->block_header->previous_block_hash;
 
         std::shared_ptr<Block> prev_block_active = get_block(active_prev_hash);
-        active_block = std::move(prev_block_active);
-        active_prev_hash = active_block->block_header->previous_block_hash;
+        block = std::move(prev_block_active);
+        active_prev_hash = block->block_header->previous_block_hash;
+
+        active_stack.push_back(std::move(block));
 
     }
 }
