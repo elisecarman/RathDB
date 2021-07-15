@@ -50,31 +50,30 @@ bool CoinDatabase :: validate_block(const std::vector<std::unique_ptr<Transactio
     if (transactions.size() == 0){
         return false;
     }
-
-    bool valid = true;
     for( int a = 0; a < transactions.size(); a = a + 1 ) {
-        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
-        Transaction trx = *transactions[a];
-        valid += validate_transaction(trx); //check if we should pass in a pointer, and how
+        const std::unique_ptr<Transaction>& trx = std::move(transactions[a]);
+        if (!validate_transaction(trx)){
+            return false;
+        }
     }
-    return valid;
+    return true;
 }
 
 
-//bool CoinDatabase :: validate_transaction(const Transaction& transaction){
-//   // std::unique_ptr<std::vector> arr = &transaction.transaction_inputs
-//    //std::vector<std::unique_ptr<TransactionInput>> arr = std::move(transaction.transaction_inputs);
-//    bool valid = true;
-//    for( int a = 0; a < transaction.transaction_inputs.size(); a = a + 1 ) {
-//        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
-//        std::unique_ptr<TransactionInput> trxIn = std::make_unique<TransactionInput>(
-//                transaction.transaction_inputs[a]->reference_transaction_hash,
-//                transaction.transaction_inputs[a]->utxo_index,
-//                transaction.transaction_inputs[a]->signature);
-//
-//        valid += validate_transactionInput(*trxIn); //check if we should pass in a pointer, and how
-//    }
-//}
+bool CoinDatabase :: validate_transaction(const std::unique_ptr<Transaction>& transaction){
+   // std::unique_ptr<std::vector> arr = &transaction.transaction_inputs
+    //std::vector<std::unique_ptr<TransactionInput>> arr = std::move(transaction.transaction_inputs);
+    bool valid = true;
+    for( int a = 0; a < transaction->transaction_inputs.size(); a = a + 1 ) {
+        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
+        std::unique_ptr<TransactionInput> trxIn = std::make_unique<TransactionInput>(
+                transaction->transaction_inputs[a]->reference_transaction_hash,
+                transaction->transaction_inputs[a]->utxo_index,
+                transaction->transaction_inputs[a]->signature);
+
+        valid += validate_transactionInput(*trxIn); //check if we should pass in a pointer, and how
+    }
+}
 
 bool CoinDatabase :: validate_transactionInput (TransactionInput& trxIn) { //what does adding & at the end mean
     const std::string locator = CoinLocator::serialize(
@@ -208,7 +207,6 @@ void CoinDatabase :: remove_transactions_from_mempool(const std::vector<std::uni
 }
 
 void CoinDatabase::flush_main_cache(){
-
     std::unordered_map<std::string, std::unique_ptr<Coin>>::iterator it = _main_cache.begin();
 // Iterate over the map using iterator
     while(it != _main_cache.end())
@@ -218,8 +216,9 @@ void CoinDatabase::flush_main_cache(){
             CoinDatabase::remove_coin_from_database(std::move(locator));
         }
     }
-    _main_cache.empty(); //ToDo: fix this
+    _main_cache.clear();
 }
+
 
 void CoinDatabase::remove_coin_from_database(std::unique_ptr<CoinLocator> locator){
     std::unique_ptr<CoinRecord> coin_record = CoinRecord::deserialize(
@@ -247,15 +246,15 @@ void CoinDatabase::store_transaction_in_mempool(std::unique_ptr<Transaction> tra
     _mempool_cache[RathCrypto::hash(Transaction::serialize(*transaction))] = std::move(transaction);
 }
 
-//bool CoinDatabase::validate_and_store_block(std::vector<std::unique_ptr<Transaction>> transactions){
-//    if (CoinDatabase::validate_block(transactions)){
-//        CoinDatabase::store_block(std::move(transactions));
-//    }
-//}
+bool CoinDatabase::validate_and_store_block(std::vector<std::unique_ptr<Transaction>> transactions){
+    if (CoinDatabase::validate_block(transactions)){
+        CoinDatabase::store_block(std::move(transactions));
+    }
+}
 
 
 bool CoinDatabase::validate_and_store_transaction(std::unique_ptr<Transaction> transaction){
-    if (CoinDatabase::validate_transaction(*transaction)){ //ToDO: ask about whether a pointer should be passed in (same for rest)
+    if (CoinDatabase::validate_transaction(transaction)){ //ToDO: ask about whether a pointer should be passed in (same for rest)
         CoinDatabase::store_transaction(std::move(transaction));
     }
 }
@@ -345,6 +344,15 @@ void CoinDatabase::remove_utxo(std::unique_ptr<Transaction> transaction){
         _main_cache.erase(locator);
         _database->delete_safely(std::to_string(trx_hash));
 
-
     }
 }
+
+bool CoinDatabase::contained_in_mempool(std::unique_ptr<Transaction> trx) {
+    return _mempool_cache.contains(RathCrypto::hash(Transaction::serialize(*trx)));
+}
+
+uint32_t CoinDatabase::mempool_size() {return _mempool_size;}
+
+
+//// doesn't need to be implemented anymore
+//std::vector<std::pair<uint32_t, uint8_t>> get_all_utxo(uint32_t public_key){}

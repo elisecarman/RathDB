@@ -35,7 +35,67 @@ TEST(CoinRecord, Serialize) {
     EXPECT_EQ(deserialized_coin_record->version, 99);
 }
 
+TEST(CoinDatabase, store_transaction_in_mempool){
+    CoinDatabase coin_database = CoinDatabase();
+    std::unique_ptr<Transaction> transaction1 = std::make_unique<Transaction>(
+            std::vector<std::unique_ptr<TransactionInput>>{},
+            std::vector<std::unique_ptr<TransactionOutput>>{}, 0, 0);
+    EXPECT_TRUE(!coin_database.contained_in_mempool(std::move(transaction1)));
 
+    coin_database.store_transaction_in_mempool(std::move(transaction1));
+    EXPECT_TRUE(coin_database.contained_in_mempool(std::move(transaction1)));
+
+}
+
+
+TEST(CoinDatabase, remove_transaction_from_mempool){
+
+    CoinDatabase coin_database = CoinDatabase();
+    std::unique_ptr<Transaction> transaction1 = std::make_unique<Transaction>(
+            std::vector<std::unique_ptr<TransactionInput>>{},
+            std::vector<std::unique_ptr<TransactionOutput>>{}, 0, 0);
+
+    std::unique_ptr<Transaction> transaction2 = std::make_unique<Transaction>(
+            std::vector<std::unique_ptr<TransactionInput>>{},
+            std::vector<std::unique_ptr<TransactionOutput>>{}, 1, 1);
+
+    coin_database.store_transaction_in_mempool(std::move(transaction1));
+    EXPECT_EQ(coin_database.contained_in_mempool(std::move(transaction1)), true);
+
+    uint32_t curr_size = coin_database.mempool_size();
+    coin_database.remove_transactions_from_mempool(std::vector<std::unique_ptr<Transaction>>{});
+    EXPECT_EQ(curr_size, coin_database.mempool_size());
+
+    std::vector<std::unique_ptr<Transaction>> vector2;
+    vector2.push_back(std::move(transaction1));
+    vector2.push_back(std::move(transaction2));
+
+    coin_database.remove_transactions_from_mempool(vector2); EXPECT_EQ(curr_size - 1, coin_database.mempool_size());
+
+}
+
+
+TEST(CoinDatabase, store_transaction){
+    //transaction1
+    std::unique_ptr<Transaction> transaction1 = std::make_unique<Transaction>(
+            std::vector<std::unique_ptr<TransactionInput>>{},
+            std::vector<std::unique_ptr<TransactionOutput>>{}, 0, 0);
+    //transaction2
+    std::unique_ptr<Transaction> transaction2 = std::make_unique<Transaction>(
+            std::vector<std::unique_ptr<TransactionInput>>{},
+            std::vector<std::unique_ptr<TransactionOutput>>{}, 1, 1);
+    //transaction3
+    std::unique_ptr<Transaction> transaction3 = std::make_unique<Transaction>(
+            std::vector<std::unique_ptr<TransactionInput>>{},
+            std::vector<std::unique_ptr<TransactionOutput>>{}, 2, 2);
+
+
+    std::unique_ptr<Transaction> transaction4 = std::make_unique<Transaction>(
+            std::vector<std::unique_ptr<TransactionInput>>{},
+            std::vector<std::unique_ptr<TransactionOutput>>{}, 2, 2);
+
+
+}
 
 
 

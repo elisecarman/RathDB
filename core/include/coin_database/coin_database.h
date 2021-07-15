@@ -36,7 +36,6 @@ private:
 
     /// db (hashmap storage) of block hash to block record.
     std::unique_ptr<Database> _database;
-
     /// Main cache variables
     std::unordered_map<std::string, std::unique_ptr<Coin>> _main_cache;
     /// maximum amount of entries in the cache
@@ -50,41 +49,65 @@ private:
     /// current amount of entires in mempool
     uint16_t _mempool_size;
 
-    bool validate_transactionInput(TransactionInput& trxIn);
+
 
 public:
     CoinDatabase();
 
+    ///validation function
     bool validate_block(const std::vector<std::unique_ptr<Transaction>>& transactions);
-    bool validate_transaction(const Transaction& transaction);
+    bool validate_transaction(const std::unique_ptr<Transaction>& transaction);
+    ///a helper to validate_transaction. called on every transaction input within a transaction
+    bool validate_transactionInput(TransactionInput& trxIn);
+
+    ///storing and validating
     void store_block(std::vector<std::unique_ptr<Transaction>> transactions);
+    void store_transactions_to_main_cache(std::vector<std::unique_ptr<Transaction>> transactions);
+    ///a helper to store_transactions_to_main_cache which is applied to each
+    ///transaction within the store_transactions_to_main_cache
+    void store_to_cache_help(std::unique_ptr<Transaction> transaction);
     bool store_transaction(std::unique_ptr<Transaction> transaction);
     bool validate_and_store_block(std::vector<std::unique_ptr<Transaction>> transactions);
     bool validate_and_store_transaction(std::unique_ptr<Transaction> transaction);
 
-    void remove_transactions_from_mempool(const std::vector<std::unique_ptr<Transaction>>& transactions);
-    void store_transactions_to_main_cache(std::vector<std::unique_ptr<Transaction>> transactions);
 
-    void store_to_cache_help(std::unique_ptr<Transaction> transaction);
+    void remove_transactions_from_mempool(const std::vector<std::unique_ptr<Transaction>>& transactions);
+
+
     void mark_as_spent(std::unique_ptr<Transaction> transaction);
 
     static CoinRecord transaction_to_coin_record(std:: unique_ptr<Transaction> trx);
     void store_transaction_in_mempool(std::unique_ptr<Transaction> transaction);
     void remove_coin_from_database(std::unique_ptr<CoinLocator> locator);
 
-
-    void undo_coins(std::vector<std::unique_ptr<UndoBlock>> undo_blocks, std::vector<std::unique_ptr<Block>> blocks);
-
-    std::vector<std::pair<uint32_t, uint8_t>> get_all_utxo(uint32_t public_key);
-
     void flush_main_cache();
 
-    //a helper for flush_main_cache
+    std::vector<std::pair<uint32_t, uint8_t>> get_all_utxo(uint32_t public_key);
+    ///undo coins functions
+
+    ///undo_coins takes two corresponding lists of blocks and undo blocks and updates its main cache and database.
+    void undo_coins(std::vector<std::unique_ptr<UndoBlock>> undo_blocks, std::vector<std::unique_ptr<Block>> blocks);
+    ///add_utxo takes in a transaction hash and a corresponding Undo Coin Record. It adds the utxo to both the main
+    /// chain and the database. For the database, it either creates a Coin Record or insert utxo within existing Coin
+    /// Records.
     void add_utxo(const std::unique_ptr<UndoCoinRecord>& undo_coin_record, uint32_t transaction_hash);
+    ///takes in a transaction from the old active chain. queries through its utxo to delete utxo from the main cache,
+    ///and uses its transaction hash to remove CoinRecords from the database.
     void remove_utxo(std::unique_ptr<Transaction> transaction);
+    ///takes in an a hypotehtical index where the utxo may be placed, the utxo_index of the utxo, and the CoinRecord
+    ///we are querying. solves this recursively.
+    /// finds the index at which Transaction output elements should be inserted
     uint32_t find_index(uint32_t index, uint32_t utxo, const std::unique_ptr<CoinRecord>& record);
 
     std::tuple<uint32_t, uint32_t> return_matching_utxo(std::unique_ptr<TransactionInput>);
+
+    ///testing helper functions
+
+    ///returns whether a transaction is within the mempool
+    bool contained_in_mempool(std::unique_ptr<Transaction>);
+    ///returns the mempool size
+    uint32_t mempool_size();
+
 };
 
 
