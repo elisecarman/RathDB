@@ -107,13 +107,12 @@ Chain::Chain() : _active_chain_length(1), _active_chain_last_block(construct_gen
 _block_info_database(std::make_unique<BlockInfoDatabase>()), _chain_writer(std::make_unique<ChainWriter>()), _coin_database(std::make_unique<CoinDatabase>())
 {
 
-    //can't use move i don't think? might need to change undo block function parameters
-     //std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(_active_chain_last_block));
 
-    _chain_writer->write_block(Block::serialize(*_active_chain_last_block));
-    //_chain_writer->write_undo_block(UndoBlock::serialize(*undo_block));
 
-    std::unique_ptr<BlockRecord> block_record = _chain_writer->store_block(*_active_chain_last_block, 1);
+    std::unique_ptr<Block> gen = get_last_block();
+    std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(gen));
+
+    std::unique_ptr<BlockRecord> block_record = _chain_writer->store_block(*_active_chain_last_block, *undo_block, 1);
 
 
     _block_info_database->store_block_record(RathCrypto::hash(BlockRecord::serialize(*block_record)), *block_record);
@@ -157,7 +156,7 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
         uint32_t prev_hash = block->block_header->previous_block_hash;
         std::unique_ptr<BlockRecord> prev_record = _block_info_database->get_block_record(prev_hash);
 
-        //cant use std move here
+        //cant use std move here, maybe need to copy
         std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(block));
 
         std::unique_ptr<BlockRecord> rec = _chain_writer->store_block(*block, *undo_block, prev_record->height + 1);
@@ -183,9 +182,7 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
             for (int i = 0; i < undo_queue.size(); i++) {
                 _last_five_hashes.pop_back();
             }
-            //deletes oldest hash (since forked block size is one greater than undoqueue size)
-            _last_five_hashes.erase(_last_five_hashes.begin());
-
+            //deletes oldest hash (since forked block size is one greater than undoqueue size (only need when size is 4)   
 
             for (int i = 0; i < forked_stack.size(); i++) {
                 _coin_database->store_block(forked_stack[i]->get_transactions());
@@ -197,6 +194,10 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
                     _last_five_hashes.push_back(hash);
                 }
 
+            }
+            //if 6 hashes, remove the oldest
+            if (_last_five_hashes.size() > 5) {
+                _last_five_hashes.erase(_last_five_hashes.begin());
             }
 
         }
@@ -399,14 +400,18 @@ std::vector<std::shared_ptr<Block>> Chain::get_forked_blocks_stack(uint32_t star
                 is_common_anc = true;
                 //if found, update branching height and return current stack (don't want to include common anc)
                 _branching_height = _block_info_database->get_block_record(prev_hash)->height;
+
+                //prettu sure need to reverse because first element is starting block (is most recent should be last?)
+                std::reverse(forked_stack.begin(), forked_stack.end());
                 return forked_stack;
 
             }
 
             std::shared_ptr<Block> prev_block = get_block(prev_hash);
             block = std::move(prev_block);
-            forked_stack.push_back(std::move(block));
             prev_hash = block->block_header->previous_block_hash;
+            forked_stack.push_back(std::move(block));
+
 
         }
 
