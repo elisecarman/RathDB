@@ -18,44 +18,28 @@ _current_undo_offset(0){}
 // This means that you will have to copy its block_header when creating
 // the BlockRecord. You do not want to use std::move here."
 
-std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block, uint32_t height){
-    //make undo block
-    std::vector<uint32_t> transaction_hashes;
-    std::vector<std::unique_ptr<UndoCoinRecord>> undo_coin_records;
+std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block,
+                                                        const UndoBlock& undo_block,
+                                                        uint32_t height){
 
-    for( int a = 0; a < block.transactions.size(); a = a + 1 ) {
-        uint32_t trx_hash = RathCrypto::hash(Transaction ::serialize(*block.transactions[a]));
-        transaction_hashes.insert(transaction_hashes.end(), trx_hash);
-        std::vector<uint32_t> utxo;
-        /// the corresponding amounts of the utxo
-        std::vector<uint32_t> amounts;
-        /// the corresponding public keys of the utxo
-        std::vector<uint32_t> public_keys;
+    std::vector<std::string> blocks;
+    blocks.push_back(Block::serialize(block));
+    blocks.push_back(UndoBlock::serialize(undo_block));
+    std::vector<std::unique_ptr<FileInfo>> info_list = ChainWriter::write_block(blocks);
 
+    uint32_t trx_size = block.transactions.size();
 
-        for ( int b = 0; b < block.transactions[a]->transaction_inputs.size(); b = b + 1 ) {
-            const std::unique_ptr<TransactionInput>& trx_in = block.transactions[a]->transaction_inputs[b];
-            std:: tuple<uint32_t, uint32_t> utxo = CoinDatabase::return_matching_utxo(&trx_in);
+//    std::unique_ptr<BlockRecord> record = std::make_unique<BlockRecord>(std::move(block.block_header),
+//                                                                        trx_size,
+//                                                                        height,
+//                                                                        *info_list[0],
+//                                                                        *info_list[1]);
 
-            utxo.insert(utxo.end(),1,b); //place at end or beginning?
-            amounts.insert(amounts.end(),1, trx_in-> ;//ToDO: ??);
-            public_keys.insert(public_keys.end(), 1, trx_in->signature);
-            }  //ToDo: is public key signature?
-
-        }
-            block.transactions[a]->transaction_inputs[b]
-    }
-    std::unique_ptr<UndoBlock> undo_block = std::make_unique<UndoBlock>(
-            //transaction outputs --> convert
-            //          input (reference transaction hash, utxo index, signature)
-            //          to output (amount, public key)
-
-
-            //undo_coin_records: //utxo, amount, public keys
-            )
     //make vector <block, undo block>
     //call write block, get File Info
     //create and return block Record
+
+   // return record;
 }
 
 
@@ -104,3 +88,71 @@ std::string ChainWriter::get_filename() {
     return filename;
 }
 
+std::string read_block(const FileInfo& block_location){
+//fopen, fseek, fread, and fclose
+    FILE * pFile;
+    long lSize;
+    char * buffer;
+    size_t result;
+
+    pFile = fopen( block_location.file_name.c_str() , "r" ); //rb?
+    //if (pFile==NULL) {fputs ("File error",stderr); exit (1);} //not too necessary
+
+// obtain file size:
+    fseek (pFile , block_location.end - block_location.start , block_location.start);
+    //SEEK_SET
+    lSize = ftell (pFile);
+    rewind (pFile);
+
+// allocate memory to contain the whole file:
+    buffer = (char*) malloc (sizeof(char)*lSize);
+    if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+// copy the file into the buffer:
+    result = fread (buffer,1,lSize,pFile);
+    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+/* the whole file is now loaded in the memory buffer. */
+
+// terminate
+    fclose (pFile);
+    free (buffer);
+
+    std::string file(buffer, lSize);
+    return file;
+}
+
+
+
+std::string read_undo_block(const FileInfo& block_location){
+    FILE * pFile;
+    long lSize;
+    char * buffer;
+    size_t result;
+
+    pFile = fopen( block_location.file_name.c_str() , "r" ); //rb?
+    //if (pFile==NULL) {fputs ("File error",stderr); exit (1);} //not too necessary
+
+// obtain file size:
+    fseek (pFile , block_location.end - block_location.start , block_location.start);
+    //SEEK_SET
+    lSize = ftell (pFile);
+    rewind (pFile);
+
+// allocate memory to contain the whole file:
+    buffer = (char*) malloc (sizeof(char)*lSize);
+    if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+// copy the file into the buffer:
+    result = fread (buffer,1,lSize,pFile);
+    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+/* the whole file is now loaded in the memory buffer. */
+
+// terminate
+    fclose (pFile);
+    free (buffer);
+
+    std::string file(buffer, lSize);
+    return file;
+}

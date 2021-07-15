@@ -22,9 +22,12 @@ std::string CoinLocator::serialize(const CoinLocator& coin_locator) {
 }
 
 std::unique_ptr<CoinLocator> CoinLocator::deserialize(const std::string& serialized_coin_locator) {
-    std::string transaction_hash = serialized_coin_locator.substr(0, serialized_coin_locator.find("-"));
-    std::string output_index = serialized_coin_locator.substr(serialized_coin_locator.find("-") + 1, serialized_coin_locator.size());
-    return std::make_unique<CoinLocator>(std::stoul (transaction_hash,nullptr,0), std::stoul (output_index,nullptr,0));
+    std::string transaction_hash = serialized_coin_locator.substr(
+            0, serialized_coin_locator.find("-"));
+    std::string output_index = serialized_coin_locator.substr(
+            serialized_coin_locator.find("-") + 1, serialized_coin_locator.size());
+    return std::make_unique<CoinLocator>(std::stoul (transaction_hash,nullptr,0),
+                                         std::stoul (output_index,nullptr,0));
 }
 
 std::string CoinLocator::serialize_from_construct(uint32_t transaction_hash, uint8_t output_index) {
@@ -43,21 +46,21 @@ CoinDatabase :: CoinDatabase():
  _mempool_capacity(1000),
  _mempool_size(0){}
 
-bool CoinDatabase :: validate_block(const std::vector<std::unique_ptr<Transaction>>& transactions){
-    //get the vector of transactions
-    //for loop
-    if (transactions.size() == 0){
-        return false;
-    }
-
-    bool valid = true;
-    for( int a = 0; a < transactions.size(); a = a + 1 ) {
-        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
-        Transaction trx = *transactions[a];
-        valid += validate_transaction(trx); //check if we should pass in a pointer, and how
-    }
-    return valid;
-}
+//bool CoinDatabase :: validate_block(const std::vector<std::unique_ptr<Transaction>>& transactions){
+//    //get the vector of transactions
+//    //for loop
+//    if (transactions.size() == 0){
+//        return false;
+//    }
+//
+//    bool valid = true;
+//    for( int a = 0; a < transactions.size(); a = a + 1 ) {
+//        //std::unique_ptr<TransactionInput> trxIn = *transaction.transaction_inputs[a];
+//        Transaction trx = *transactions[a];
+//        valid += validate_transaction(trx); //check if we should pass in a pointer, and how
+//    }
+//    return valid;
+//}
 
 
 bool CoinDatabase :: validate_transaction(const Transaction& transaction){
@@ -242,11 +245,11 @@ void CoinDatabase::store_transaction_in_mempool(std::unique_ptr<Transaction> tra
     _mempool_cache[RathCrypto::hash(Transaction::serialize(*transaction))] = std::move(transaction);
 }
 
-bool CoinDatabase::validate_and_store_block(std::vector<std::unique_ptr<Transaction>> transactions){
-    if (CoinDatabase::validate_block(transactions)){
-        CoinDatabase::store_block(std::move(transactions));
-    }
-}
+//bool CoinDatabase::validate_and_store_block(std::vector<std::unique_ptr<Transaction>> transactions){
+//    if (CoinDatabase::validate_block(transactions)){
+//        CoinDatabase::store_block(std::move(transactions));
+//    }
+//}
 
 
 bool CoinDatabase::validate_and_store_transaction(std::unique_ptr<Transaction> transaction){
@@ -310,11 +313,11 @@ void CoinDatabase::add_utxo(const std::unique_ptr<UndoCoinRecord>& undo_coin_rec
                 uint32_t pub_key = undo_coin_record->public_keys[a];
 
                 uint32_t index = CoinDatabase::find_index(a,utxo,record);
-                //ToDo: here we assume that we do not have to check earlier than a. is this foolproof?
+                ///ToDo: here we assume that we do not have to check earlier than a. is this foolproof?
 
-                auto it = record->utxo.insert(record->utxo.begin() + index, utxo);
-                auto it2 = record->amounts.insert(record->amounts.begin() + index, amount);
-                auto it3 = record->public_keys.insert(record->public_keys.begin() + index, pub_key);
+                record->utxo.insert(record->utxo.begin() + index, utxo);
+                record->amounts.insert(record->amounts.begin() + index, amount);
+                record->public_keys.insert(record->public_keys.begin() + index, pub_key);
 
             }
         }

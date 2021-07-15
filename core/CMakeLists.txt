@@ -20,7 +20,7 @@ target_include_directories(db PUBLIC include/db)
 # -----------------------------------------------
 # Setting up libproto
 
-include(C:/Users/Elise/vcpkg/scripts/buildsystems/vcpkg.cmake)  #comment out before turning in
+#include(C:/Users/Elise/vcpkg/scripts/buildsystems/vcpkg.cmake)  #comment out before turning in
 #
 #
 

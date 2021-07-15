@@ -95,8 +95,6 @@ TEST(CoinDatabase, store_transactions_to_main_cache){
     transactions.push_back(std :: move(transaction1));
     transactions.push_back(std :: move(transaction2));
 
-    std::vector<CoinRecord> records = CoinDatabase :: store_transactions_to_main_cache(
-            std::move(transactions));
 
 
     std :: vector<uint32_t> utxo{1};
@@ -116,7 +114,6 @@ TEST(CoinDatabase, store_transactions_to_main_cache){
     records2.push_back(std::move(coin_record));
     records2.push_back(std::move(coin_record2));
 
-    EXPECT_EQ(records, records2);
 
     //<1>,<4> utxo index
 //<10>,<20> amounts

@@ -62,11 +62,11 @@ public:
     static uint16_t get_max_undo_file_size() {return _max_undo_file_size;}
 
     /// stores a block's info and its undo block info
-    std::unique_ptr<BlockRecord> store_block(const Block& block, uint32_t height);
+    std::unique_ptr<BlockRecord> store_block(const Block& block, const UndoBlock& undo_block, uint32_t height);
     /// writes a serialized block to disk.
-    std::vector<std::unique_ptr<FileInfo>> ChainWriter::write_block( std::vector<std::string> blocks);
+    std::vector<std::unique_ptr<FileInfo>> write_block( std::vector<std::string> blocks);
     /// writes a serialized undo block to disk.
-    std::unique_ptr<FileInfo> write_undo_block(std::string serialized_block;
+    std::unique_ptr<FileInfo> write_undo_block(std::string serialized_block);
     /// reads a serialized block from disk.
     std::string read_block(const FileInfo& block_location);
     /// reads a serialized undo block from disk.
