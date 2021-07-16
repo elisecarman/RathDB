@@ -101,8 +101,6 @@ TEST(Chain, GetActiveChainLength) {
     uint32_t length = chain.get_active_chain_length();
 
     EXPECT_TRUE(length == 2);
-
-
 }
 
 

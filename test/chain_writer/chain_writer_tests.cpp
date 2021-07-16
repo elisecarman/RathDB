@@ -42,6 +42,14 @@ TEST(ChainWriter, write_block) {
 
     std::string read_block = chain_writer.read_block(*info);
 
-    EXPECT_EQ(Block::deserialize(read_block), b);
+    EXPECT_EQ(Block::deserialize(read_block)->block_header->difficulty_target, b->block_header->difficulty_target);
 
+    EXPECT_EQ(Block::deserialize(read_block)->block_header->merkle_root, b->block_header->merkle_root);
+
+    EXPECT_EQ(Block::deserialize(read_block)->block_header->nonce, b->block_header->nonce);
+
+    EXPECT_EQ(Block::deserialize(read_block)->block_header->previous_block_hash, b->block_header->previous_block_hash);
+
+
+    EXPECT_EQ(Block::deserialize(read_block)->transactions.size(), b->transactions.size());
 }

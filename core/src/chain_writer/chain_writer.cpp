@@ -1,6 +1,7 @@
 #include <chain_writer.h>
 #include <rathcrypto.h>
 #include<stdio.h>
+#include <filesystem>
 
 const std::string ChainWriter::_file_extension = "data";
 const std::string ChainWriter::_block_filename = "blocks";
@@ -24,8 +25,10 @@ std::unique_ptr<BlockRecord> ChainWriter :: store_block(const Block& block,
                                                         uint32_t height){
 
 
-    std::unique_ptr<FileInfo> block_info = ChainWriter::write_block(Block::serialize(block));
-    std::unique_ptr<FileInfo> undo_info = ChainWriter::write_block(UndoBlock::serialize(undo_block));
+    std::unique_ptr<FileInfo> block_info = ChainWriter::write_block(
+            Block::serialize(block));
+    std::unique_ptr<FileInfo> undo_info = ChainWriter::write_block(
+            UndoBlock::serialize(undo_block));
 
     uint32_t trx_size = block.transactions.size();
 
@@ -60,6 +63,7 @@ std::unique_ptr<BlockHeader> ChainWriter::get_header(const Block& block){
 
 
 std::unique_ptr<FileInfo> ChainWriter::write_block( std::string block) {
+
     FILE *pFile;
 
         int n = block.length();
@@ -74,135 +78,147 @@ std::unique_ptr<FileInfo> ChainWriter::write_block( std::string block) {
         }
         //ToDo: should we use the getters?
 
-        pFile = fopen(ChainWriter::get_filename(false).c_str(), "a");
+        pFile = fopen(ChainWriter::get_filename(false).c_str(), "a+"); //or a?
+
+
+        if (!std::filesystem::is_directory(get_data_directory())){
+
+            std::filesystem::create_directory(get_data_directory());
+        }
+        if (pFile == NULL){
+            pFile = fopen(ChainWriter::get_filename(false).c_str(), "w+");
+        }
+
         fwrite(char_block, sizeof(char), sizeof(char_block), pFile);
         fclose(pFile);
 
         uint16_t new_offset = _current_block_offset + n;
-        std::unique_ptr<FileInfo> info = std::make_unique<FileInfo>(
-                get_filename(false),
-                _current_block_offset,
-                new_offset);
 
+        uint16_t old_block_offset = _current_block_offset;
         _current_block_offset = new_offset;
 
     //ToDo: check for file size, and open new file accordingly
-    return info;
+
+    return std::make_unique<FileInfo>(
+            get_filename(false),
+            old_block_offset,
+            new_offset);
+
+    //return std::move(info);
 }
 
 
 std::unique_ptr<FileInfo> ChainWriter::write_undo_block( std::string block) {
-    FILE *pFile;
 
-    int n = block.length();
-    char char_block[n + 1];
-    strcpy(char_block, block.c_str());
+        FILE *pFile;
+
+        int n = block.length();
+        char char_block[n + 1];
+        strcpy(char_block, block.c_str());
 
 
-    //ToDo: can we assume block and undo block have same max block size
-    if (_current_undo_offset + n > get_max_undo_file_size()) { //check for current size of file{
-        _current_undo_offset = 0;
-        _current_undo_file_number = +1;
+        //ToDo: can we assume block and undo block have same max block size
+        if (_current_undo_offset + n > get_max_undo_file_size()) { //check for current size of file{
+            _current_undo_offset = 0;
+            _current_undo_file_number = +1;
+        }
+        //ToDo: should we use the getters?
+
+        pFile = fopen(ChainWriter::get_filename(false).c_str(), "a+"); //or a?
+
+
+        if (!std::filesystem::is_directory(get_data_directory())){
+
+            std::filesystem::create_directory(get_data_directory());
+        }
+        if (pFile == NULL){
+            pFile = fopen(ChainWriter::get_filename(false).c_str(), "w+");
+        }
+
+        fwrite(char_block, sizeof(char), sizeof(char_block), pFile);
+        fclose(pFile);
+
+        uint16_t new_offset = _current_undo_offset + n;
+
+        uint16_t old_block_offset = _current_undo_offset;
+        _current_undo_offset = new_offset;
+
+        //ToDo: check for file size, and open new file accordingly
+
+        return std::make_unique<FileInfo>(
+                get_filename(false),
+                old_block_offset,
+                new_offset);
+
     }
-    //ToDo: should we use the getters?
-
-    pFile = fopen(ChainWriter::get_filename(true).c_str(), "a");
-    fwrite(char_block, sizeof(char), sizeof(char_block), pFile);
-    fclose(pFile);
-
-    uint16_t new_offset = _current_block_offset + n;
-    std::unique_ptr<FileInfo> info = std::make_unique<FileInfo>(
-            get_filename(true),
-            _current_block_offset,
-            new_offset);
-
-    _current_block_offset = new_offset;
-
-    //ToDo: check for file size, and open new file accordingly
-    return info;
-}
 
 
 
 std::string ChainWriter::get_filename(bool is_undo) {
     if (is_undo) {
-        std::string filename = _data_directory + "/"
+        return _data_directory + "/"
                                 + _undo_filename + "_"
                                 + std::to_string(_current_undo_file_number)
                                 + _file_extension;
-        return filename;
+        //return filename;
     }
-    std::string filename = _data_directory + "/"
-                           + _block_filename + "_"
-                           + std::to_string(_current_block_file_number)
+    return _data_directory + "/"
+    + _block_filename + "_"
+                           + std::to_string(_current_block_file_number) + "."
                            + _file_extension;
-    return filename;
+    //return filename;
 }
 
-std::string read_block(const FileInfo& block_location){
-////fopen, fseek, fread, and fclose
-//    FILE * pFile;
-//    long lSize;
-//    char * buffer;
-//    size_t result;
-//
-//    pFile = fopen( block_location.file_name.c_str() , "r" ); //rb?
-//    //if (pFile==NULL) {fputs ("File error",stderr); exit (1);} //not too necessary
-//// obtain file size:
-//    fseek (pFile , block_location.end - block_location.start , block_location.start);
-//    //SEEK_SET
-//    lSize = ftell (pFile);
-//    rewind (pFile);
-//// allocate memory to contain the whole file:
-//    buffer = (char*) malloc (sizeof(char)*lSize);
-//    if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
-//// copy the file into the buffer:
-//    result = fread (buffer,1,lSize,pFile);
-//    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
-///* the whole file is now loaded in the memory buffer. */
-//// terminate
-//    fclose (pFile);
-//    free (buffer);
-//
-//    std::string file(buffer, lSize);
-//    return file;
-
-
-    FILE * pFile;
-    long lSize;
-    char * buffer;
-    size_t result;
-    pFile = fopen( block_location.file_name.c_str() , "r" );
-    fseek (pFile , block_location.end - block_location.start , block_location.start);
-    lSize = ftell (pFile);
-    buffer = (char*) malloc (sizeof(char)*lSize);
-    result = fread (buffer,1,lSize,pFile);
-    fclose (pFile);
-    std::string file(buffer, lSize);
-    return file;
-
-
-}
-
-
-
-std::string read_undo_block(const FileInfo& block_location){
-    FILE * pFile;
+std::string ChainWriter::read_block(const FileInfo &block_location) {
+  FILE * pFile;
     long lSize;
     char * buffer;
     size_t result;
 
-    pFile = fopen( block_location.file_name.c_str() , "r" ); //rb?
-    //if (pFile==NULL) {fputs ("File error",stderr); exit (1);} //not too necessary
+pFile = fopen( block_location.file_name.c_str() , "r" ); //rb?
+//if (pFile==NULL) {fputs ("File error",stderr); exit (1);} //not too necessary
 
 // obtain file size:
-    fseek (pFile , block_location.end - block_location.start , block_location.start);
-    //SEEK_SET
+fseek (pFile , block_location.end - block_location.start , block_location.start);
+//SEEK_SET
+lSize = ftell (pFile);
+rewind (pFile);
+
+// allocate memory to contain the whole file:
+buffer = (char*) malloc (sizeof(char)*lSize);
+
+if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+// copy the file into the buffer:
+result = fread (buffer,1,lSize,pFile);
+if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+/* the whole file is now loaded in the memory buffer. */
+
+// terminate
+fclose (pFile);
+free (buffer);
+
+std::string file(buffer, lSize);
+return file;
+
+}
+
+std::string ChainWriter::read_undo_block(const FileInfo &undo_block_location) {
+    FILE * pFile;
+    long lSize;
+    char * buffer;
+    size_t result;
+
+// obtain file size:
+    fseek (pFile , undo_block_location.end - undo_block_location.start , undo_block_location.start);
+//SEEK_SET
     lSize = ftell (pFile);
     rewind (pFile);
 
 // allocate memory to contain the whole file:
     buffer = (char*) malloc (sizeof(char)*lSize);
+
     if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
 
 // copy the file into the buffer:
@@ -218,5 +234,9 @@ std::string read_undo_block(const FileInfo& block_location){
     std::string file(buffer, lSize);
     return file;
 
-
 }
+
+
+
+
+
