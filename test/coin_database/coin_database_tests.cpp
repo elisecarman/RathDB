@@ -705,6 +705,6 @@ TEST(CoinDatabase, remove_utxo){
     EXPECT_EQ(coin_database.get_from_database(std::to_string(hash))->amounts.size(), 0);
     EXPECT_EQ(coin_database.get_from_database(std::to_string(hash))->public_keys.size(), 0);
 
-
-
 }
+
+

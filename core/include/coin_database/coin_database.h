@@ -103,7 +103,7 @@ public:
     void add_utxo(const std::unique_ptr<UndoCoinRecord>& undo_coin_record, uint32_t transaction_hash);
     ///takes in a transaction from the old active chain. queries through its utxo to delete utxo from the main cache,
     ///and uses its transaction hash to remove CoinRecords from the database.
-
+    //tested
     void remove_utxo(std::unique_ptr<Transaction> transaction);
     ///takes in an a hypotehtical index where the utxo may be placed, the utxo_index of the utxo, and the CoinRecord
     ///we are querying. solves this recursively.

@@ -21,6 +21,7 @@ private:
     // The first section of private members keep track of
     // information regarding the active chain.
 
+    uint32_t _branching_height;
     /// The length (in blocks) of the active chain.
     uint32_t _active_chain_length;
     /// The last block of the active chain.

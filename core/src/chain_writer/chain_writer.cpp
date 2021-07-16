@@ -139,7 +139,7 @@ std::string ChainWriter::get_filename(bool is_undo) {
     return filename;
 }
 
-std::string read_block( FileInfo block_location){
+std::string read_block(const FileInfo& block_location){
 ////fopen, fseek, fread, and fclose
 //    FILE * pFile;
 //    long lSize;
@@ -167,6 +167,7 @@ std::string read_block( FileInfo block_location){
 //    std::string file(buffer, lSize);
 //    return file;
 
+
     FILE * pFile;
     long lSize;
     char * buffer;
@@ -179,11 +180,13 @@ std::string read_block( FileInfo block_location){
     fclose (pFile);
     std::string file(buffer, lSize);
     return file;
+
+
 }
 
 
 
-std::string read_undo_block( FileInfo block_location){
+std::string read_undo_block(const FileInfo& block_location){
     FILE * pFile;
     long lSize;
     char * buffer;
@@ -214,4 +217,6 @@ std::string read_undo_block( FileInfo block_location){
 
     std::string file(buffer, lSize);
     return file;
+
+
 }
