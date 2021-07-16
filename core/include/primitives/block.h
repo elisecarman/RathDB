@@ -30,6 +30,7 @@ public:
 
     static std::string serialize(const Block& block);
     static std::unique_ptr<Block> deserialize(const std::string& serialized_block);
+
 };
 
 #endif //RATH_BLOCK_H

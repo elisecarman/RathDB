@@ -68,9 +68,9 @@ public:
     /// writes a serialized undo block to disk.
     std::unique_ptr<FileInfo> write_undo_block(std::string serialized_block);
     /// reads a serialized block from disk.
-    std::string read_block(const FileInfo& block_location);
+    std::string read_block( FileInfo block_location);  //const&
     /// reads a serialized undo block from disk.
-    std::string read_undo_block(const FileInfo& undo_block_location);
+    std::string read_undo_block( FileInfo undo_block_location); //const&
 
     std::string get_filename(bool is_undo);
 

@@ -1,5 +1,6 @@
 #include <chain_writer.h>
 #include <rathcrypto.h>
+#include<stdio.h>
 
 const std::string ChainWriter::_file_extension = "data";
 const std::string ChainWriter::_block_filename = "blocks";
@@ -138,43 +139,51 @@ std::string ChainWriter::get_filename(bool is_undo) {
     return filename;
 }
 
-std::string read_block(const FileInfo& block_location){
-//fopen, fseek, fread, and fclose
+std::string read_block( FileInfo block_location){
+////fopen, fseek, fread, and fclose
+//    FILE * pFile;
+//    long lSize;
+//    char * buffer;
+//    size_t result;
+//
+//    pFile = fopen( block_location.file_name.c_str() , "r" ); //rb?
+//    //if (pFile==NULL) {fputs ("File error",stderr); exit (1);} //not too necessary
+//// obtain file size:
+//    fseek (pFile , block_location.end - block_location.start , block_location.start);
+//    //SEEK_SET
+//    lSize = ftell (pFile);
+//    rewind (pFile);
+//// allocate memory to contain the whole file:
+//    buffer = (char*) malloc (sizeof(char)*lSize);
+//    if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+//// copy the file into the buffer:
+//    result = fread (buffer,1,lSize,pFile);
+//    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+///* the whole file is now loaded in the memory buffer. */
+//// terminate
+//    fclose (pFile);
+//    free (buffer);
+//
+//    std::string file(buffer, lSize);
+//    return file;
+
     FILE * pFile;
     long lSize;
     char * buffer;
     size_t result;
-
-    pFile = fopen( block_location.file_name.c_str() , "r" ); //rb?
-    //if (pFile==NULL) {fputs ("File error",stderr); exit (1);} //not too necessary
-
-// obtain file size:
+    pFile = fopen( block_location.file_name.c_str() , "r" );
     fseek (pFile , block_location.end - block_location.start , block_location.start);
-    //SEEK_SET
     lSize = ftell (pFile);
-    rewind (pFile);
-
-// allocate memory to contain the whole file:
     buffer = (char*) malloc (sizeof(char)*lSize);
-    if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
-
-// copy the file into the buffer:
     result = fread (buffer,1,lSize,pFile);
-    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
-
-/* the whole file is now loaded in the memory buffer. */
-
-// terminate
     fclose (pFile);
-    free (buffer);
-
     std::string file(buffer, lSize);
     return file;
 }
 
 
 
-std::string read_undo_block(const FileInfo& block_location){
+std::string read_undo_block( FileInfo block_location){
     FILE * pFile;
     long lSize;
     char * buffer;

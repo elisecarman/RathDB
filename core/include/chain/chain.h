@@ -113,6 +113,9 @@ public:
 
     ///elise edit: added this to get common ancestor hash
     std::vector<std::shared_ptr<Block>> active_chain_from_ancestor(uint32_t starting_hash);
+
+
+    std::unique_ptr<Block> make_blockd(std::unique_ptr<Block> block, int tx_index, int out_index);
 };
 
 #endif //RATHDB_STENCIL_CHAIN_H

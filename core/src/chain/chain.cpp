@@ -111,76 +111,76 @@ Chain::Chain() : _active_chain_length(1), _active_chain_last_block(construct_gen
 /// HANDLE BLOCK /////////////////////////////////////////////
 
 
-
+//
 void Chain::handle_block(std::unique_ptr<Block> block) {
-    bool valid;
-    if (block->block_header->previous_block_hash == get_last_block_hash()) {
-        valid = _coin_database->validate_and_store_block(block->get_transactions());
-
-        _active_chain_length += 1;
-        _active_chain_last_block = std::move(block);
-
-        //not sure how to properly keep track of last 5 hashes
-        if (_last_five_hashes.size() < 5) {
-            _last_five_hashes.push_back(RathCrypto::hash(Block::serialize(*_active_chain_last_block)));
-        }
-        else {
-            _last_five_hashes.erase(_last_five_hashes.begin());
-            ///Where does push back put the element in the vector?
-            ///Maybe consider looking for previous block hash five times instead
-            _last_five_hashes.push_back(RathCrypto::hash(Block::serialize(*_active_chain_last_block)));
-        }
-    }
-
-    else {
-        valid = _coin_database->validate_block(block->get_transactions());
-    }
-
-    if (valid) {
-
-        uint32_t prev_hash = block->block_header->previous_block_hash;
-        std::unique_ptr<BlockRecord> prev_record = _block_info_database->get_block_record(prev_hash);
-
-        std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(block));
-        std::unique_ptr<BlockRecord> rec = _chain_writer->store_block(*block, *undo_block,
-                                                                      prev_record->height + 1);
-
-
-        ///THESE ARE ALREADY IN THE STORE_BLOCK FUNCTION
-//        _chain_writer->write_block(Block::serialize(*block));
-//        std::unique_ptr<UndoBlock> undo = make_undo_block(std::move(block));
-//        _chain_writer->write_undo_block(UndoBlock::serialize(*undo));
-        ///THESE ARE ALREADY IN THE STORE_BLOCK FUNCTION
-
-        _block_info_database->store_block_record(RathCrypto::hash(Block::serialize(*block)), *rec);
-
-        //if a fork occurs
-        if (rec->height > _active_chain_length) {
-            std::vector<std::shared_ptr<Block>> forked_stack = get_forked_blocks_stack(prev_hash);
-
-            //need to find branching height
-
-
-
-            std::vector
-                    ///here takes in a BlockRecord hash and returns a common ancestor Block Record hash
-                    ///not sure how to get the BlockRecord to start with
-
-            std::vector<std::unique_ptr<UndoBlock>> undo_queue = get_undo_blocks_queue(rec->height);
-
-
-            std::vector<std::unique_ptr<Block> active_chain = Chain::get_active_chain();
-                    //ToDo: get active chain
-            _coin_database->undo_coins(undo_queue, );
-
-            ///(down)if this aims to store the utxo back in the main_cache/ coin_database: undo_coin takes care of that
-            for (int i = 0; i < undo_queue.size(); i++) {
-                std::shared_ptr<Block> fork = forked_stack[i];
-                _coin_database->store_block(fork->get_transactions());
-            }
-            ///(up) if this aims to store the utxo back in the main_cache/ coin_database: undo_coin takes care of that
-        }
-    }
+//    bool valid;
+//    if (block->block_header->previous_block_hash == get_last_block_hash()) {
+//        valid = _coin_database->validate_and_store_block(block->get_transactions());
+//
+//        _active_chain_length += 1;
+//        _active_chain_last_block = std::move(block);
+//
+//        //not sure how to properly keep track of last 5 hashes
+//        if (_last_five_hashes.size() < 5) {
+//            _last_five_hashes.push_back(RathCrypto::hash(Block::serialize(*_active_chain_last_block)));
+//        }
+//        else {
+//            _last_five_hashes.erase(_last_five_hashes.begin());
+//            ///Where does push back put the element in the vector?
+//            ///Maybe consider looking for previous block hash five times instead
+//            _last_five_hashes.push_back(RathCrypto::hash(Block::serialize(*_active_chain_last_block)));
+//        }
+//    }
+//
+//    else {
+//        valid = _coin_database->validate_block(block->get_transactions());
+//    }
+//
+//    if (valid) {
+//
+//        uint32_t prev_hash = block->block_header->previous_block_hash;
+//        std::unique_ptr<BlockRecord> prev_record = _block_info_database->get_block_record(prev_hash);
+//
+//        std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(block));
+//        std::unique_ptr<BlockRecord> rec = _chain_writer->store_block(*block, *undo_block,
+//                                                                      prev_record->height + 1);
+//
+//
+//        ///THESE ARE ALREADY IN THE STORE_BLOCK FUNCTION
+////        _chain_writer->write_block(Block::serialize(*block));
+////        std::unique_ptr<UndoBlock> undo = make_undo_block(std::move(block));
+////        _chain_writer->write_undo_block(UndoBlock::serialize(*undo));
+//        ///THESE ARE ALREADY IN THE STORE_BLOCK FUNCTION
+//
+//        _block_info_database->store_block_record(RathCrypto::hash(Block::serialize(*block)), *rec);
+//
+//        //if a fork occurs
+//        if (rec->height > _active_chain_length) {
+//            std::vector<std::shared_ptr<Block>> forked_stack = get_forked_blocks_stack(prev_hash);
+//
+//            //need to find branching height
+//
+//
+//
+//            std::vector
+//                    ///here takes in a BlockRecord hash and returns a common ancestor Block Record hash
+//                    ///not sure how to get the BlockRecord to start with
+//
+//            std::vector<std::unique_ptr<UndoBlock>> undo_queue = get_undo_blocks_queue(rec->height);
+//
+//
+//            std::vector<std::unique_ptr<Block> active_chain = Chain::get_active_chain();
+//                    //ToDo: get active chain
+//            _coin_database->undo_coins(undo_queue, );
+//
+//            ///(down)if this aims to store the utxo back in the main_cache/ coin_database: undo_coin takes care of that
+//            for (int i = 0; i < undo_queue.size(); i++) {
+//                std::shared_ptr<Block> fork = forked_stack[i];
+//                _coin_database->store_block(fork->get_transactions());
+//            }
+//            ///(up) if this aims to store the utxo back in the main_cache/ coin_database: undo_coin takes care of that
+//        }
+//    }
 //
 //
 //
@@ -427,4 +427,28 @@ std::vector<std::shared_ptr<Block>> Chain::active_chain_from_ancestor(uint32_t s
         active_stack.push_back(std::move(block));
 
     }
+}
+
+
+
+std::unique_ptr<Block> Chain::make_blockd(std::unique_ptr<Block> block, int tx_index, int out_index) {
+    std::vector<std::unique_ptr<Transaction>> transactions;
+    std::vector<std::unique_ptr<TransactionInput>> transaction_inputs;
+    transaction_inputs.push_back(std::make_unique<TransactionInput>(
+            RathCrypto::hash(Transaction::serialize(*block->transactions.at(tx_index))),
+            out_index,
+            99
+    ));
+    std::vector<std::unique_ptr<TransactionOutput>> transaction_outputs;
+    transaction_outputs.push_back(std::make_unique<TransactionOutput>(
+            block->transactions.at(tx_index)->transaction_outputs.at(out_index)->amount,
+            block->transactions.at(tx_index)->transaction_outputs.at(out_index)->public_key
+    ));
+    transactions.push_back(std::make_unique<Transaction>(std::move(transaction_inputs),
+                                                         std::move(transaction_outputs)));
+    std::unique_ptr<BlockHeader> block_header =
+            std::make_unique<BlockHeader>(1,RathCrypto::hash(
+                    Block::serialize(*block)), 3, 4, 5, 6);
+    std::unique_ptr<Block> b = std::make_unique<Block>( std::move(block_header), std::move(transactions));
+    return std::move(b);
 }
