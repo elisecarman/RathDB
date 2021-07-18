@@ -16,6 +16,9 @@ void BlockInfoDatabase::store_block_record(uint32_t hash, const BlockRecord& rec
 std::unique_ptr<BlockRecord> BlockInfoDatabase::get_block_record(uint32_t block_hash) {
 
     std::string serial = _database->get_safely(std::to_string(block_hash));
+    if (serial == ""){
+        return nullptr;
+    }
     return BlockRecord::deserialize(serial);
 }
 

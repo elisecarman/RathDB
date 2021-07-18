@@ -157,58 +157,60 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
 
             uint32_t prev_hash = block->block_header->previous_block_hash;
             std::unique_ptr<BlockRecord> prev_record = _block_info_database->get_block_record(prev_hash);
+            if (prev_record != nullptr) {
 
-            uint32_t hash = RathCrypto::hash(Block::serialize(*block));
+                uint32_t hash = RathCrypto::hash(Block::serialize(*block));
 
-            //if the fork is too deep
-            if (_active_chain_length - prev_record->height < 5 ) {
+                //if the fork is too deep
+                if (_active_chain_length - prev_record->height < 5) {
 
-                //if a fork catches up to main chain
-                if (prev_record->height + 1 > _active_chain_length) {
-                    std::vector<std::shared_ptr<Block>> forked_stack = get_forked_blocks_stack(hash);
+                    //if a fork catches up to main chain
+                    if (prev_record->height + 1 > _active_chain_length) {
+                        std::vector<std::shared_ptr<Block>> forked_stack = get_forked_blocks_stack(hash);
 
-                    //need to find branching height
-                    std::vector<std::unique_ptr<UndoBlock>> undo_queue = get_undo_blocks_queue(_branching_height);
+                        //need to find branching height
+                        std::vector<std::unique_ptr<UndoBlock>> undo_queue = get_undo_blocks_queue(_branching_height);
 
-                    uint32_t undo_queue_size = undo_queue.size();
+                        uint32_t undo_queue_size = undo_queue.size();
 
-                    //gets blocks of undo queue
-                    //make sure get active chain works for start == end (i think it should)
-                    std::vector<std::unique_ptr<Block>> queue = get_active_chain(_branching_height + 1,
-                                                                                 _active_chain_length);
-                    _coin_database->undo_coins(std::move(undo_queue), std::move(queue));
+                        //gets blocks of undo queue
+                        //make sure get active chain works for start == end (i think it should)
+                        std::vector<std::unique_ptr<Block>> queue = get_active_chain(_branching_height + 1,
+                                                                                     _active_chain_length);
+                        _coin_database->undo_coins(std::move(undo_queue), std::move(queue));
 
 
-                    //deletes undo queue hashes
-                    for (int i = 0; i < undo_queue_size; i++) {
-                        _last_five_hashes.pop_back();
-                    }
-                    //deletes oldest hash (since forked block size is one greater than undoqueue size (only need when size is 4)
+                        //deletes undo queue hashes
+                        for (int i = 0; i < undo_queue_size; i++) {
+                            _last_five_hashes.pop_back();
+                        }
+                        //deletes oldest hash (since forked block size is one greater than undoqueue size (only need when size is 4)
 
-                    for (int i = 0; i < forked_stack.size(); i++) {
-                        _coin_database->store_block(forked_stack[i]->get_transactions());
-                        //should add to queue in order of oldest to most recent
-                        if (i + 1 < forked_stack.size()) {
-                            _last_five_hashes.push_back(forked_stack[i + 1]->block_header->previous_block_hash);
-                        } else {
-                            _last_five_hashes.push_back(hash);
+                        for (int i = 0; i < forked_stack.size(); i++) {
+                            _coin_database->store_block(forked_stack[i]->get_transactions());
+                            //should add to queue in order of oldest to most recent
+                            if (i + 1 < forked_stack.size()) {
+                                _last_five_hashes.push_back(forked_stack[i + 1]->block_header->previous_block_hash);
+                            } else {
+                                _last_five_hashes.push_back(hash);
+                            }
+
+                        }
+                        //if 6 hashes, remove the oldest
+                        if (_last_five_hashes.size() > 5) {
+                            _last_five_hashes.erase(_last_five_hashes.begin());
                         }
 
+                    } else {
+
+                        std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(block));
+
+                        std::unique_ptr<BlockRecord> rec = _chain_writer->store_block(*block, *undo_block,
+                                                                                      prev_record->height + 1);
+
+                        _block_info_database->store_block_record(hash, *rec);
+
                     }
-                    //if 6 hashes, remove the oldest
-                    if (_last_five_hashes.size() > 5) {
-                        _last_five_hashes.erase(_last_five_hashes.begin());
-                    }
-
-                } else {
-
-                    std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(block));
-
-                    std::unique_ptr<BlockRecord> rec = _chain_writer->store_block(*block, *undo_block,
-                                                                                  prev_record->height + 1);
-
-                    _block_info_database->store_block_record(hash, *rec);
-
                 }
             }
         }
@@ -225,6 +227,9 @@ void Chain::handle_transaction(std::unique_ptr<Transaction> transaction) {
 //--
 uint32_t Chain::get_chain_length(uint32_t block_hash) {
     std::unique_ptr<BlockRecord> block_record = _block_info_database->get_block_record(block_hash);
+    if (block_record == nullptr){
+        return 0;
+    }
     return block_record->height;
     //info is readily availble in block records
 }
@@ -232,6 +237,9 @@ uint32_t Chain::get_chain_length(uint32_t block_hash) {
 //--
 std::unique_ptr<Block> Chain::get_block(uint32_t block_hash) {
     std::unique_ptr<BlockRecord> block_record = _block_info_database->get_block_record(block_hash);
+    if (block_record == nullptr){
+        return nullptr;
+    }
     FileInfo file_info = FileInfo(block_record->block_file_stored, block_record->block_offset_start, block_record->block_offset_end);
     std::string read_block = _chain_writer->read_block(file_info);
     uint32_t block_hash_2 = RathCrypto::hash(read_block);
@@ -243,6 +251,10 @@ std::unique_ptr<UndoBlock> Chain::get_undo_block(uint32_t block_hash) {
     //blocks are stored on disk, block info database stores location
     //query block info database to find where block is stored on disk  , then use chain writer to read from disk
     std::unique_ptr<BlockRecord> block_record = _block_info_database->get_block_record(block_hash);
+    if (block_record == nullptr){
+        return nullptr;
+    }
+
     FileInfo file_info = FileInfo(block_record->undo_file_stored,
                                   block_record->undo_offset_start, block_record->undo_offset_end);
     std::string read_undo_block = _chain_writer->read_undo_block(file_info);
@@ -429,7 +441,6 @@ uint32_t Chain::get_active_chain_length() const {
 std::vector<std::unique_ptr<UndoBlock>> Chain::get_undo_blocks_queue(uint32_t branching_height) {
     std::unique_ptr<UndoBlock> undo_block = get_undo_block(get_last_block_hash());
     std::vector<std::unique_ptr<UndoBlock>> queue;
-    queue.push_back(std::move(undo_block));
     std::unique_ptr<Block> block = get_last_block();
     int height = _active_chain_length;
     uint32_t prev_hash = block->block_header->previous_block_hash;
@@ -449,6 +460,9 @@ std::vector<std::shared_ptr<Block>> Chain::get_forked_blocks_stack(uint32_t star
     std::vector<std::shared_ptr<Block>> forked_stack;
     //should have already been stored in handle block
     std::shared_ptr<Block> block = get_block(starting_hash);
+    if (block == nullptr){
+        return std::vector<std::shared_ptr<Block>>{};
+    }
     //adds starting block to stack
     uint32_t prev_hash = block->block_header->previous_block_hash;
     forked_stack.push_back(std::move(block));

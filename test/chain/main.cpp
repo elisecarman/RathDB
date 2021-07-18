@@ -20,7 +20,18 @@ int main(int argc, char **argv)
     return ret;
 }
 
+TEST(Chain, GetLastBlock){
+    Chain chain = Chain();
 
+    std::unique_ptr<Block> genesis_block = chain.get_last_block();
+    const std::vector<std::unique_ptr<TransactionOutput>> &transaction_outputs = genesis_block->transactions[0]->transaction_outputs;
+    EXPECT_EQ(genesis_block->transactions.size(), 1);
+    EXPECT_EQ(transaction_outputs.at(0)->amount, 100);
+    EXPECT_EQ(transaction_outputs.at(1)->amount, 200);
+    EXPECT_EQ(transaction_outputs.at(2)->amount, 300);
+}
+
+///free autograder test
 TEST(Chain, GetGenesisBlockHash0) {
 // test setup - remove past data
     std::filesystem::remove_all(ChainWriter::get_data_directory());
@@ -63,6 +74,8 @@ std::unique_ptr<Block> make_blockd(std::unique_ptr<Block> block, int tx_index, i
     return std::move(b);
 }
 
+
+///free autograder test
 TEST(Chain, HandleValidBlock23) {
     std::filesystem::remove_all(ChainWriter::get_data_directory());
 
@@ -128,6 +141,25 @@ TEST(Chain, GetBlock) {
 
 
 }
+
+
+//tests a block that doesnt exist in chain
+TEST(Chain, GetBlockNotExist){
+    std::filesystem::remove_all(ChainWriter::get_data_directory());
+
+    Chain chain = Chain();
+
+    std::unique_ptr<Block> genesis_block = chain.get_last_block();
+
+    std::unique_ptr<Block> block = make_blockd(std::move(genesis_block), 0, 0);
+    uint32_t block_hash = RathCrypto::hash(Block::serialize(*block));
+
+    std::unique_ptr<Block> b2 = chain.get_block(block_hash);
+
+    EXPECT_TRUE(b2 == nullptr );
+}
+
+
 //test getting active chain of one block
 TEST(Chain, GetActiveChain1) {
     std::filesystem::remove_all(ChainWriter::get_data_directory());
@@ -141,9 +173,15 @@ TEST(Chain, GetActiveChain1) {
 
     EXPECT_EQ(active_chain.size(), 1);
 
-    std::unique_ptr<Block> block1 = std::move(active_chain.at(1));
+   // std::unique_ptr<Block> block1 = std::move(active_chain.at(1));
 
-    bool balwark = true;
+    EXPECT_EQ(active_chain.at(0)->block_header->previous_block_hash, chain.get_last_block()->block_header->previous_block_hash);
+    EXPECT_EQ(active_chain.at(0)->block_header->nonce, chain.get_last_block()->block_header->nonce);
+    EXPECT_EQ(active_chain.at(0)->block_header->difficulty_target, chain.get_last_block()->block_header->difficulty_target);
+    EXPECT_EQ(active_chain.at(0)->block_header->merkle_root, chain.get_last_block()->block_header->merkle_root);
+    EXPECT_EQ(active_chain.at(0)->transactions[0]->transaction_outputs.size(), chain.get_last_block()->transactions[0]->transaction_outputs.size());
+
+
     //EXPECT_EQ(Block::serialize(*active_chain.at(0)), Block::serialize(*genesis_block));
 
 }
@@ -172,7 +210,12 @@ TEST(Chain, GetActiveChain2) {
    // std::unique_ptr<Block> block2 = chain.get_last_block();
 
 
-    EXPECT_EQ(active_chain.at(1), chain.get_last_block());
+   // EXPECT_EQ(active_chain.at(1), chain.get_last_block());
+    EXPECT_EQ(active_chain.at(1)->block_header->previous_block_hash, chain.get_last_block()->block_header->previous_block_hash);
+    EXPECT_EQ(active_chain.at(1)->block_header->nonce, chain.get_last_block()->block_header->nonce);
+    EXPECT_EQ(active_chain.at(1)->block_header->difficulty_target, chain.get_last_block()->block_header->difficulty_target);
+    EXPECT_EQ(active_chain.at(1)->block_header->merkle_root, chain.get_last_block()->block_header->merkle_root);
+    EXPECT_EQ(active_chain.at(1)->transactions[0]->transaction_outputs.size(), chain.get_last_block()->transactions[0]->transaction_outputs.size());
 
 }
 

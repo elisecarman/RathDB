@@ -96,7 +96,7 @@ std::unique_ptr<FileInfo> ChainWriter::write_block( std::string block) {
     return std::make_unique<FileInfo>(
             get_filename(false),
             old_block_offset,
-            new_offset);
+            old_block_offset + n); ///added this
     //return std::move(info);
 }
 
@@ -135,7 +135,7 @@ std::unique_ptr<FileInfo> ChainWriter::write_undo_block( std::string block) {
         return std::make_unique<FileInfo>(
                 get_filename(true),
                 old_block_offset,
-                new_offset);
+                old_block_offset + n);  ///added this
     }
 
 
