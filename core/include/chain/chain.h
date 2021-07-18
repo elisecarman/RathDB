@@ -53,23 +53,15 @@ private:
 
 
 public:
-    // The first section of public functions constructs a Chain.
 
     /// Constructs a Chain.
     Chain();
-
-    // The second section of public methods is used to handle
-    // incoming data from either the network or locally.
 
     /// Handles validation and storing (if validated) a block.
     void handle_block(std::unique_ptr<Block> block);
 
     /// Handles validation and storing (if validated) a transaction.
     void handle_transaction(std::unique_ptr<Transaction> transaction);
-
-    // The third section of public methods is getters for data
-    // on the chain or metadata about a particular chain that
-    // will most likely require traversal.
 
     /// Gets the chain length up until block with inputted hash.
     uint32_t get_chain_length(uint32_t block_hash);
@@ -86,9 +78,6 @@ public:
     /// Gets some block hashes on the active chain in order.
     std::vector<uint32_t> get_active_chain_hashes(uint32_t start, uint32_t end);
 
-    // The fourth section of public methods is getters for
-    // the active chain that shouldn't require any traversal.
-
     /// Gets the last block of the active chain.
     std::unique_ptr<Block> get_last_block();
 
@@ -98,33 +87,14 @@ public:
     /// Gets the length of the active chain.
     uint32_t get_active_chain_length() const;
 
-    // The fifth section of public methods is for querying
-    // transaction related data.
-
-    /// Gets all utxo for a particular public key.
-    std::vector<std::pair<uint32_t, uint8_t>> get_all_utxo(uint32_t public_key);
-
-    // Copy constructor and copy assignment operator deleted.
     Chain(Chain &&other) = delete;
 
     Chain &operator=(const Chain &other) = delete;
 
-
-///added by Elise
-    std::vector<std::unique_ptr<Transaction>> copy_transactons();
-
-    std::vector<std::unique_ptr<Block>> reverse_vector(std::vector<std::unique_ptr<Block>> vector);
-
-    ///elise edit: added this to get common ancestor hash
-    std::vector<std::shared_ptr<Block>> active_chain_from_ancestor(uint32_t starting_hash);
-
-
     std::unique_ptr<Block> copy_block(const Block& b);
-
 
     std::string return_string();
 
-    std::unique_ptr<Block> make_blockd(std::unique_ptr<Block> block, int tx_index, int out_index);
 };
 
 #endif //RATHDB_STENCIL_CHAIN_H

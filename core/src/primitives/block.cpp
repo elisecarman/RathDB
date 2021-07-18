@@ -84,15 +84,18 @@ std::unique_ptr<Block> Block::deserialize(const std::string& serialized_block) {
         std::vector<std::unique_ptr<TransactionOutput>> txos;
         for (int j = 0; j < pblock.transactions(i).transaction_outputs_size(); j++) {
             PTransactionOutput ptxo = pblock.transactions(i).transaction_outputs(j);
-            std::unique_ptr<TransactionOutput> txo = std::make_unique<TransactionOutput>(ptxo.amount(), ptxo.public_key());
+            std::unique_ptr<TransactionOutput> txo = std::make_unique<TransactionOutput>(ptxo.amount(),
+                                                                                         ptxo.public_key());
             txos.push_back(std::move(txo));
         }
-        std::unique_ptr<Transaction> tx = std::make_unique<Transaction>(std::move(txis), std::move(txos), pblock.transactions(i).version(),
+        std::unique_ptr<Transaction> tx = std::make_unique<Transaction>(std::move(txis), std::move(txos),
+                                                                        pblock.transactions(i).version(),
                                                                         pblock.transactions(i).lock_time());
         transactions_.push_back(std::move(tx));
     }
 
-    std::unique_ptr<Block> block = std::unique_ptr<Block>( new Block(std::move(block_header_), std::move(transactions_)));
+    std::unique_ptr<Block> block = std::unique_ptr<Block>( new Block(std::move(block_header_),
+                                                                     std::move(transactions_)));
     return std::move(block);
 }
 
@@ -100,7 +103,7 @@ std::vector<std::unique_ptr<Transaction>> Block::get_transactions(){
     return std::move(transactions);
 }
 
-///added by Elise
+
 std::vector<std::unique_ptr<Transaction>> Block::copy_transactions(){
     std::vector<std::unique_ptr<Transaction>> trxs;
     for( int a = 0; a < transactions.size(); a = a + 1 ) {

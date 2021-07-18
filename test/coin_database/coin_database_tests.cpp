@@ -184,10 +184,6 @@ TEST(CoinDatabase, validate_transactionInput){
     //store to cache
     coin_database.store_transactions_to_main_cache(std::move(transactions));
 
-    //remove one coin from main cache
-//    coin_database.quick_cache_remove(CoinLocator::serialize_from_construct(trx_hash,0));
-
-    //new transaction inputs to check:
     TransactionInput input = TransactionInput(trx_hash,0,2);
 
     TransactionInput input2 = TransactionInput(trx_hash,1,5);
@@ -248,7 +244,6 @@ TEST(CoinDatabase, store_to_cache_help){
 
     EXPECT_EQ(coin_database.cache_size(), 1);
 
-    //test empty transactions
 }
 
 TEST(CoinDatabase, store_transactions_to_main_cache){
@@ -304,8 +299,6 @@ TEST(CoinDatabase, store_transactions_to_main_cache){
     //create a vector with one transaction
     std :: vector<std :: unique_ptr<Transaction>> transactions;
     transactions.push_back(std::move(transaction1));
-
-    uint32_t trx_hash = RathCrypto::hash(Transaction::serialize(tran1));
 
     EXPECT_EQ(coin_database.cache_size(), 0);
     //store to cache
@@ -370,13 +363,10 @@ TEST(CoinDatabase, flush_main_cache){
     std :: vector<std :: unique_ptr<Transaction>> transactions;
     transactions.push_back(std::move(transaction1));
 
-    uint32_t trx_hash = RathCrypto::hash(Transaction::serialize(tran1));
-
     //store to cache
     coin_database.store_transactions_to_main_cache(std::move(transactions));
     //check the utxo are stored
     EXPECT_EQ(coin_database.cache_size(), 2);
-    //EXPECT_TRUE(coin_database.(*transaction1));
     coin_database.flush_main_cache();
     EXPECT_EQ(coin_database.cache_size(), 0);
 }
@@ -400,8 +390,6 @@ TEST(CoinDatabase, return_matching_utxo){
     std :: vector<std::unique_ptr<TransactionOutput>> outputs;
     outputs.push_back(std :: move(output));
     outputs.push_back(std :: move(output2));
-
-
 
     std :: vector<std::unique_ptr<TransactionInput>> inputs2;
 
@@ -800,8 +788,4 @@ TEST(CoinDatabase, validate_transaction){
 
 }
 
-
-TEST(CoinDatabase, validate_and_store_transaction){
-
-}
 
