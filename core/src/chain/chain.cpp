@@ -203,7 +203,7 @@ void Chain::handle_block(std::unique_ptr<Block> block) {
 
                     } else {
 
-                        std::unique_ptr<UndoBlock> undo_block = make_undo_block(std::move(block));
+                        std::unique_ptr<UndoBlock> undo_block = make_undo_block(Chain::copy_block(*block));
 
                         std::unique_ptr<BlockRecord> rec = _chain_writer->store_block(*block, *undo_block,
                                                                                       prev_record->height + 1);
@@ -510,3 +510,48 @@ std::string Chain:: return_string(){
     return (Block::serialize(*_active_chain_last_block));
 }
 
+
+std::unique_ptr<Block> Chain::copy_block(const Block& b) {
+    ///if we move the pointer then the _active_chain_last_block field will be empty.
+    ///should we make this a shared pointer?
+    std::vector<std::unique_ptr<Transaction>> last_block_trans;
+
+    std::unique_ptr<BlockHeader>  header = std::make_unique<BlockHeader> (
+            b.block_header->version,
+            b.block_header->previous_block_hash,
+            b.block_header->merkle_root,
+            b.block_header->difficulty_target,
+            b.block_header->nonce,
+            b.block_header->timestamp);
+
+    for (int i = 0; i < b.transactions.size(); i++) {
+
+        std::vector<std::unique_ptr<TransactionInput>> trans_in;
+        std::vector<std::unique_ptr<TransactionOutput>> trans_out;
+
+        for (int j = 0; j < b.transactions[i]->transaction_inputs.size(); j++) {
+            std::unique_ptr<TransactionInput> txi = std::make_unique<TransactionInput>(b.transactions[i]->transaction_inputs[j]->reference_transaction_hash,
+                                                                                       b.transactions[i]->transaction_inputs[j]->utxo_index,
+                                                                                       b.transactions[i]->transaction_inputs[j]->signature);
+            trans_in.push_back(std::move(txi));
+        }
+        for (int k = 0; k < b.transactions[i]->transaction_outputs.size(); k++) {
+            std::unique_ptr<TransactionOutput> txo = std::make_unique<TransactionOutput>(b.transactions[i]->transaction_outputs[k]->amount,
+                                                                                         b.transactions[i]->transaction_outputs[k]->public_key);
+            trans_out.push_back(std::move(txo));
+        }
+        std::unique_ptr<Transaction> new_trans = std::make_unique<Transaction>(std::move(trans_in), std::move(trans_out)
+                , b.transactions[i]->version,
+                b.transactions[i]->lock_time
+        );
+
+        last_block_trans.push_back(std::move(new_trans));
+
+    }
+
+    //std::unique_ptr<Block> last_block =
+    return std::make_unique<Block>(std::move(header), std::move(last_block_trans));
+    //return last_block;
+
+
+}

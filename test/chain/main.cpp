@@ -287,7 +287,7 @@ TEST(Chain, HandleBlock34) {
     EXPECT_EQ(chain.get_active_chain_length(), 3);
 }
 
-//tests adding two blocks attached two genesis
+//tests adding two blocks attached to genesis
 TEST(Chain, TwoBranches) {
     std::filesystem::remove_all(ChainWriter::get_data_directory());
 
@@ -312,17 +312,17 @@ TEST(Chain, TwoBranches) {
 
     //makes second branch
     std::unique_ptr<Block> block2 = make_blockd(std::move(genesis_block1), 0, 1);
-    uint32_t block_hash2 = RathCrypto::hash(Block::serialize(*block));
+    uint32_t block_hash2 = RathCrypto::hash(Block::serialize(*block2));
     chain.handle_block(std::move(block2));
 
 
     EXPECT_EQ(chain.get_active_chain_length(), 2);
 
-    EXPECT_EQ(block_hash2, chain.get_last_block_hash()); //changed value 1 to block_hash2 instead of block_hash
+    EXPECT_EQ(block_hash, chain.get_last_block_hash()); //changed value 1 to block_hash2 instead of block_hash
     std::unique_ptr<Block> ret_block = chain.get_last_block();
     EXPECT_EQ(ret_block->transactions.size(), 1);
     EXPECT_EQ(ret_block->transactions.at(0)->transaction_outputs.size(), 1);
-    EXPECT_EQ(ret_block->transactions.at(0)->transaction_outputs.at(0)->amount, 200);
+    EXPECT_EQ(ret_block->transactions.at(0)->transaction_outputs.at(0)->amount, 100);
 }
 
 //tests a fork that occurs
