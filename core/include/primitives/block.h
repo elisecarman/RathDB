@@ -31,6 +31,8 @@ public:
     static std::string serialize(const Block& block);
     static std::unique_ptr<Block> deserialize(const std::string& serialized_block);
 
+    std::vector<std::unique_ptr<Transaction>> copy_transactions();
+
 };
 
 #endif //RATH_BLOCK_H

@@ -9,7 +9,7 @@ BlockInfoDatabase::BlockInfoDatabase() : _database(std::make_unique<Database>())
 void BlockInfoDatabase::store_block_record(uint32_t hash, const BlockRecord& record) {
     //might need to check for null values?
     std::string serial = BlockRecord::serialize(record);
-    _database->put_safely(std::to_string(hash), std::move(serial));
+    _database->put_safely(std::to_string(hash), serial);
 
 }
 

@@ -708,3 +708,100 @@ TEST(CoinDatabase, remove_utxo){
 }
 
 
+
+TEST(CoinDatabase, validate_transaction){
+    CoinDatabase coin_database = CoinDatabase();
+//empty inputs
+
+
+//two outputs
+    std::unique_ptr<TransactionOutput> output = std::make_unique<TransactionOutput>(
+            10,
+            0);
+
+    std::unique_ptr<TransactionOutput> output2 = std::make_unique<TransactionOutput>(
+            20,
+            1);
+
+//store outputs in vector
+    std :: vector<std::unique_ptr<TransactionOutput>> outputs;
+    outputs.push_back(std :: move(output));
+    outputs.push_back(std :: move(output2));
+
+
+
+    std :: vector<std::unique_ptr<TransactionInput>> inputs2;
+
+//two outputs
+    std::unique_ptr<TransactionOutput> output3 = std::make_unique<TransactionOutput>(
+            10,
+            0);
+
+    std::unique_ptr<TransactionOutput> output4 = std::make_unique<TransactionOutput>(
+            20,
+            1);
+
+//store outputs in vector
+    std::vector<std::unique_ptr<TransactionOutput>> outputs2;
+    outputs2.push_back(std :: move(output3));
+    outputs2.push_back(std :: move(output4));
+
+    std::unique_ptr<Transaction> transaction1 = std::make_unique<Transaction>(
+            std :: move(inputs2),
+            std :: move(outputs2),
+            1,
+            1);
+
+    uint32_t transaction1_hash = RathCrypto::hash(Transaction::serialize(*transaction1));
+
+//create a vector with one transaction
+    std :: vector<std :: unique_ptr<Transaction>> transactions;
+    transactions.push_back(std::move(transaction1));
+
+
+
+//store to cache
+    coin_database.store_transactions_to_main_cache(std::move(transactions));
+
+
+    std :: vector<std::unique_ptr<TransactionInput>> inputs;
+    std::unique_ptr<TransactionInput> input = std::make_unique<TransactionInput>(
+            transaction1_hash,
+            0,
+            0);
+
+    std::unique_ptr<TransactionInput> input2 = std::make_unique<TransactionInput>(
+            transaction1_hash,
+            1,
+            1);
+
+    inputs.push_back(std::move(input));
+    inputs.push_back(std::move(input2));
+
+    std::unique_ptr<Transaction> tran1 = std::make_unique<Transaction>(std::move(inputs),
+                                                                       std::move(outputs),
+                                                                       1,
+                                                                       1);
+
+    std::vector<std::unique_ptr<TransactionInput>> inputs5;
+    std::vector<std::unique_ptr<TransactionOutput>> outputs5;
+    std::unique_ptr<TransactionInput> input6 = std::make_unique<TransactionInput>(1,2,3);
+    std::unique_ptr<TransactionOutput> output6 = std::make_unique<TransactionOutput>(1,2);
+    inputs5.push_back(std::move(input6));
+    outputs5.push_back(std::move(output6));
+
+    std::unique_ptr<Transaction> tran2 = std::make_unique<Transaction>(std::move(inputs5),
+                                                                      std::move(outputs5),
+                                                                      1,
+                                                                      1);
+
+    EXPECT_TRUE(coin_database.validate_transaction(std::move(tran1)));
+
+
+}
+
+
+TEST(CoinDatabase, validate_and_store_transaction){
+
+}
+

@@ -110,11 +110,16 @@ public:
     Chain &operator=(const Chain &other) = delete;
 
 
+///added by Elise
+    std::vector<std::unique_ptr<Transaction>> copy_transactons();
+
     std::vector<std::unique_ptr<Block>> reverse_vector(std::vector<std::unique_ptr<Block>> vector);
 
     ///elise edit: added this to get common ancestor hash
     std::vector<std::shared_ptr<Block>> active_chain_from_ancestor(uint32_t starting_hash);
 
+
+    std::string return_string();
 
     std::unique_ptr<Block> make_blockd(std::unique_ptr<Block> block, int tx_index, int out_index);
 };

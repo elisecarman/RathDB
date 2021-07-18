@@ -63,13 +63,19 @@ bool CoinDatabase :: validate_block(const std::vector<std::unique_ptr<Transactio
 bool CoinDatabase :: validate_transaction(const std::unique_ptr<Transaction>& transaction){
    // std::unique_ptr<std::vector> arr = &transaction.transaction_inputs
     //std::vector<std::unique_ptr<TransactionInput>> arr = std::move(transaction.transaction_inputs);
-
-
+    if (transaction->transaction_inputs.size() == 0){
+        return false;
+    }
     bool valid = true;
     for( int a = 0; a < transaction->transaction_inputs.size(); a ++ ) {
 
-        valid += validate_transactionInput(*transaction->transaction_inputs[a]); //check if we should pass in a pointer, and how
+        bool valid_input = validate_transactionInput(*transaction->transaction_inputs[a]);
+        if (!valid_input){
+            return false;
+        }; //check if we should pass in a pointer, and how
     }
+
+    return true;
 }
 
 //Transaction CoinDatabase :: copy_transaction(std::unique_ptr<Transaction>)
@@ -80,7 +86,10 @@ bool CoinDatabase :: validate_transactionInput (TransactionInput trxIn) { //what
             CoinLocator(trxIn.reference_transaction_hash, trxIn.utxo_index));
 
     if (_main_cache.contains(locator)){
-        return _main_cache[locator]->is_spent;
+        bool is_spent = _main_cache[locator]->is_spent;
+        if (!is_spent){
+            return true;
+        }
     }
     else {
         std::string record = _database->get_safely(std::to_string(trxIn.reference_transaction_hash));
@@ -172,13 +181,13 @@ void CoinDatabase :: store_transactions_to_main_cache(
        //store coin to main_cache
        CoinDatabase::store_to_cache_help(std::move(transactions[a]));
        //ToDo: REALLY need to double check this
-    }
+    } ///what was that? why does this lead to UndoRecordCoin?
 }
 
 void CoinDatabase :: store_to_cache_help(std::unique_ptr<Transaction> transaction){
 
     _main_cache_size += transaction->transaction_outputs.size();
-    std::string trx_hash = std::to_string(RathCrypto::hash(Transaction::serialize(*transaction)));
+    uint32_t trx_hash =RathCrypto::hash(Transaction::serialize(*transaction));
 
     for( int a = 0; a < transaction->transaction_outputs.size(); a++ ) {
 
@@ -188,7 +197,7 @@ void CoinDatabase :: store_to_cache_help(std::unique_ptr<Transaction> transactio
                 false);
 
 
-        _main_cache[trx_hash] = std::move(coin);
+        _main_cache[CoinLocator::serialize_from_construct(trx_hash,a)] = std::move(coin);
         printf("stored one transaction");
     }
 
@@ -291,6 +300,7 @@ void CoinDatabase::store_transaction_in_mempool(std::unique_ptr<Transaction> tra
 bool CoinDatabase::validate_and_store_block(std::vector<std::unique_ptr<Transaction>> transactions){
     if (CoinDatabase::validate_block(transactions)){
         CoinDatabase::store_block(std::move(transactions));
+        return true;
     }
 }
 

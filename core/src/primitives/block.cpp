@@ -99,3 +99,33 @@ std::unique_ptr<Block> Block::deserialize(const std::string& serialized_block) {
 std::vector<std::unique_ptr<Transaction>> Block::get_transactions(){
     return std::move(transactions);
 }
+
+///added by Elise
+std::vector<std::unique_ptr<Transaction>> Block::copy_transactions(){
+    std::vector<std::unique_ptr<Transaction>> trxs;
+    for( int a = 0; a < transactions.size(); a = a + 1 ) {
+        std::vector <std::unique_ptr<TransactionInput>> inputs;
+        for (int b = 0; b < transactions[a]->transaction_inputs.size(); b = b + 1) {
+            std::unique_ptr <TransactionInput> input = std::make_unique<TransactionInput>(
+                    transactions[a]->transaction_inputs[b]->reference_transaction_hash,
+                    transactions[a]->transaction_inputs[b]->utxo_index,
+                    transactions[a]->transaction_inputs[b]->signature);
+            inputs.push_back(std::move(input));
+        }
+        std::vector <std::unique_ptr<TransactionOutput>> outputs;
+        for (int b = 0; b < transactions[a]->transaction_outputs.size(); b = b + 1) {
+            std::unique_ptr <TransactionOutput> output = std::make_unique<TransactionOutput>(
+                    transactions[a]->transaction_outputs[b]->amount,
+                    transactions[a]->transaction_outputs[b]->public_key);
+            outputs.push_back(std::move(output));
+        }
+        std::unique_ptr <Transaction> trx1 = std::make_unique<Transaction>(
+                std::move(inputs),
+                std::move(outputs),
+                transactions[a]->version,
+                transactions[a]->lock_time);
+
+        trxs.push_back(std::move(trx1));
+    }
+    return trxs;
+}
