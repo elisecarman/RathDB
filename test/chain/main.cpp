@@ -334,7 +334,6 @@ TEST(Chain, ForkInTheRoad) {
     // 1 = add valid to genesis
     std::unique_ptr<Block> genesis_block = chain.get_last_block();
     std::unique_ptr<Block> genesis_block1 = chain.get_last_block();
-    std::unique_ptr<Block> genesis_block2 = chain.get_last_block();
     // check that genesis block has at least 1 transaction
     EXPECT_TRUE(genesis_block->transactions.size() >= 1);
     const std::vector<std::unique_ptr<TransactionOutput>>& transaction_outputs = genesis_block->transactions.at(0)->transaction_outputs;
@@ -355,12 +354,11 @@ TEST(Chain, ForkInTheRoad) {
     chain.handle_block(std::move(fork1));
 
     //need to test get_block
-    std::unique_ptr<Block> get_fork_1 = chain.get_block(block_hash);
+    std::unique_ptr<Block> get_fork_1 = chain.get_block(block_hash2);
 
     //makes copy of fork 1 to add to
     std::unique_ptr<Block> fork2 = make_blockd(std::move(get_fork_1), 0, 0);
-    uint32_t block_hash3 = RathCrypto::hash(Block::serialize(*block));
-
+    uint32_t block_hash3 = RathCrypto::hash(Block::serialize(*fork2));
     //should update active chain and have fork2 as last block
     chain.handle_block(std::move(fork2));
 
